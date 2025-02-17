@@ -97,6 +97,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ...validation.data,
       landlordId: req.user.id,
       status: "Available",
+      pageViews: 0,
+      uniqueVisitors: 0,
+      submissionCount: 0
     });
     res.status(201).json(property);
   });
@@ -140,6 +143,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ...validation.data,
       tenantId: req.user.id,
       status: "pending",
+      message: validation.data.message || null
     });
 
     // Increment submission count for the property
