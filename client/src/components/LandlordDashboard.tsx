@@ -124,7 +124,8 @@ const LandlordDashboard = () => {
         <h2 className="text-2xl font-semibold">Property Dashboard</h2>
         <Button 
           onClick={() => setShowAddProperty(true)}
-          className="flex items-center space-x-2"
+          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white"
+          size="lg"
         >
           <Plus className="w-4 h-4" />
           <span>Add New Property</span>
