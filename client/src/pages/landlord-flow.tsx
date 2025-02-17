@@ -10,7 +10,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
-// Success page component moved outside to prevent form state issues
+// Success page component
 const SuccessPage = ({ formData }: { formData: any }) => {
   const [showAccountForm, setShowAccountForm] = useState(false);
   const screeningLink = `https://myrentcard.com/apply/${Math.random().toString(36).substr(2, 9)}`;
@@ -112,7 +112,8 @@ const SuccessPage = ({ formData }: { formData: any }) => {
               <div className="pt-4">
                 <Button 
                   onClick={() => setShowAccountForm(!showAccountForm)}
-                  className="w-full"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-6 font-semibold"
+                  size="lg"
                 >
                   Create Free Account
                 </Button>
@@ -213,7 +214,8 @@ const SuccessPage = ({ formData }: { formData: any }) => {
                 />
                 <Button 
                   type="submit"
-                  className="w-full"
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white text-lg py-6 font-semibold"
+                  size="lg"
                   disabled={registerMutation.isPending}
                 >
                   {registerMutation.isPending ? "Creating Account..." : "Complete Account Setup"}
@@ -284,7 +286,19 @@ const SuccessPage = ({ formData }: { formData: any }) => {
 // Main LandlordFlow component
 const LandlordFlow = () => {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
+  interface FormData {
+    businessName: string;
+    managerName: string;
+    businessEmail: string;
+    requirements: {
+      minCreditScore: string;
+      minIncome: string;
+      noEvictions: boolean;
+      cleanRentalHistory: boolean;
+    }
+  }
+
+  const [formData, setFormData] = useState<FormData>({
     businessName: '',
     managerName: '',
     businessEmail: '',
@@ -298,7 +312,7 @@ const LandlordFlow = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value
     }));
@@ -308,7 +322,7 @@ const LandlordFlow = () => {
     const { name, value, type, checked } = e.target;
     const fieldName = name.replace('requirements.', '');
 
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       requirements: {
         ...prev.requirements,
@@ -372,7 +386,8 @@ const LandlordFlow = () => {
       <div className="text-center">
         <Button
           onClick={() => setStep(2)}
-          className="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
+          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-lg text-lg font-semibold"
+          size="lg"
         >
           Create Pre-Screening Page
         </Button>
@@ -396,12 +411,12 @@ const LandlordFlow = () => {
               <label className="block text-sm font-medium mb-1">
                 Business/Property Management Name
               </label>
-              <input
+              <Input
                 type="text"
                 name="businessName"
                 value={formData.businessName}
                 onChange={handleInputChange}
-                className="w-full p-2 border rounded-lg"
+                className="w-full"
                 required
               />
             </div>
@@ -409,12 +424,12 @@ const LandlordFlow = () => {
               <label className="block text-sm font-medium mb-1">
                 Contact Name
               </label>
-              <input
+              <Input
                 type="text"
                 name="managerName"
                 value={formData.managerName}
                 onChange={handleInputChange}
-                className="w-full p-2 border rounded-lg"
+                className="w-full"
                 required
               />
             </div>
@@ -422,12 +437,12 @@ const LandlordFlow = () => {
               <label className="block text-sm font-medium mb-1">
                 Business Email
               </label>
-              <input
+              <Input
                 type="email"
                 name="businessEmail"
                 value={formData.businessEmail}
                 onChange={handleInputChange}
-                className="w-full p-2 border rounded-lg"
+                className="w-full"
                 required
               />
             </div>
@@ -495,7 +510,8 @@ const LandlordFlow = () => {
         <div className="text-center">
           <Button
             type="submit"
-            className="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-lg text-lg font-semibold"
+            size="lg"
           >
             Create Pre-Screening Page <ArrowRight className="inline ml-2" />
           </Button>
