@@ -35,28 +35,20 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  // Updated session configuration
-  const isProduction = process.env.NODE_ENV === 'production';
+  // Basic session configuration without domain-specific settings
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET!,
+    secret: process.env.SESSION_SECRET || 'development-secret',
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
-    name: 'myrentcard.sid', // Custom cookie name
+    name: 'sid',
     cookie: {
-      secure: isProduction, // Only use secure cookies in production
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: isProduction ? 'strict' : 'lax',
-      domain: isProduction ? '.myrentcard.com' : undefined // Set domain in production
-    },
-    proxy: isProduction // Enable proxy in production
+      sameSite: 'lax',
+      // Don't set secure or domain - let the proxy handle it
+    }
   };
-
-  // Trust first proxy
-  if (isProduction) {
-    app.set("trust proxy", 1);
-  }
 
   app.use(session(sessionSettings));
   app.use(passport.initialize());
@@ -85,7 +77,7 @@ export function setupAuth(app: Express) {
         console.error("Login error:", error);
         return done(error);
       }
-    }),
+    })
   );
 
   passport.serializeUser((user, done) => {
@@ -108,6 +100,7 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // Auth routes
   app.post("/api/register", async (req, res, next) => {
     try {
       const existingUser = await storage.getUserByUsername(req.body.username);
