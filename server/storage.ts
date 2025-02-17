@@ -2,118 +2,91 @@ import { users, properties, applications } from "@shared/schema";
 import type { InsertUser, User, Property, Application } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
+import { db } from "./db";
+import { eq } from "drizzle-orm";
+import { sql } from 'drizzle-orm';
 
 const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
   sessionStore: session.Store;
-  
+
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-  
+
   // Property operations
   createProperty(property: Omit<Property, "id" | "createdAt">): Promise<Property>;
   getAllProperties(): Promise<Property[]>;
   getPropertyById(id: number): Promise<Property | undefined>;
-  
+
   // Application operations
   createApplication(application: Omit<Application, "id" | "createdAt">): Promise<Application>;
   getTenantApplications(tenantId: number): Promise<Application[]>;
   getLandlordApplications(landlordId: number): Promise<Application[]>;
 }
 
-export class MemStorage implements IStorage {
+export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
-  private users: Map<number, User>;
-  private properties: Map<number, Property>;
-  private applications: Map<number, Application>;
-  private currentIds: {
-    users: number;
-    properties: number;
-    applications: number;
-  };
 
   constructor() {
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
     });
-    this.users = new Map();
-    this.properties = new Map();
-    this.applications = new Map();
-    this.currentIds = {
-      users: 1,
-      properties: 1,
-      applications: 1,
-    };
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username,
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentIds.users++;
-    const user: User = { 
-      ...insertUser, 
-      id,
-      createdAt: new Date()
-    };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async createProperty(insertProperty: Omit<Property, "id" | "createdAt">): Promise<Property> {
-    const id = this.currentIds.properties++;
-    const property: Property = {
-      ...insertProperty,
-      id,
-      createdAt: new Date()
-    };
-    this.properties.set(id, property);
+    const [property] = await db.insert(properties).values(insertProperty).returning();
     return property;
   }
 
   async getAllProperties(): Promise<Property[]> {
-    return Array.from(this.properties.values());
+    return db.select().from(properties);
   }
 
   async getPropertyById(id: number): Promise<Property | undefined> {
-    return this.properties.get(id);
+    const [property] = await db.select().from(properties).where(eq(properties.id, id));
+    return property;
   }
 
   async createApplication(insertApplication: Omit<Application, "id" | "createdAt">): Promise<Application> {
-    const id = this.currentIds.applications++;
-    const application: Application = {
-      ...insertApplication,
-      id,
-      createdAt: new Date()
-    };
-    this.applications.set(id, application);
+    const [application] = await db.insert(applications).values(insertApplication).returning();
     return application;
   }
 
   async getTenantApplications(tenantId: number): Promise<Application[]> {
-    return Array.from(this.applications.values()).filter(
-      (app) => app.tenantId === tenantId
-    );
+    return db.select().from(applications).where(eq(applications.tenantId, tenantId));
   }
 
   async getLandlordApplications(landlordId: number): Promise<Application[]> {
-    const landlordProperties = Array.from(this.properties.values())
-      .filter((prop) => prop.landlordId === landlordId)
-      .map((prop) => prop.id);
-    
-    return Array.from(this.applications.values())
-      .filter((app) => landlordProperties.includes(app.propertyId));
+    const landlordProperties = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.landlordId, landlordId));
+
+    const propertyIds = landlordProperties.map(prop => prop.id);
+
+    return db
+      .select()
+      .from(applications)
+      .where(sql`${applications.propertyId} = ANY(${propertyIds})`);
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
