@@ -2,10 +2,33 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertPropertySchema, insertApplicationSchema } from "@shared/schema";
+import { insertPropertySchema, insertApplicationSchema, insertUserSchema } from "@shared/schema";
+import { scrypt, randomBytes } from "crypto";
+import { promisify } from "util";
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
+
+  // Create sample tenant user if it doesn't exist
+  const existingUser = await storage.getUserByUsername("test");
+  if (!existingUser) {
+    await storage.createUser({
+      username: "test",
+      password: await hashPassword("test"),
+      type: "tenant",
+      name: "Test User",
+      email: "test@example.com",
+      phone: "555-0123"
+    });
+  }
 
   // Property routes
   app.get("/api/properties", async (req, res) => {

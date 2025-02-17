@@ -24,16 +24,16 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="hidden md:flex items-center space-x-8">
               <nav className="flex space-x-8">
                 <Link href="#how-it-works">
-                  <a className="text-gray-600 hover:text-gray-900">How It Works</a>
+                  <span className="text-gray-600 hover:text-gray-900 cursor-pointer">How It Works</span>
                 </Link>
                 <Link href="#benefits">
-                  <a className="text-gray-600 hover:text-gray-900">Benefits</a>
+                  <span className="text-gray-600 hover:text-gray-900 cursor-pointer">Benefits</span>
                 </Link>
                 <Link href="#testimonials">
-                  <a className="text-gray-600 hover:text-gray-900">Testimonials</a>
+                  <span className="text-gray-600 hover:text-gray-900 cursor-pointer">Testimonials</span>
                 </Link>
                 <Link href="#faq">
-                  <a className="text-gray-600 hover:text-gray-900">FAQ</a>
+                  <span className="text-gray-600 hover:text-gray-900 cursor-pointer">FAQ</span>
                 </Link>
               </nav>
 
@@ -52,14 +52,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </Button>
                   </>
                 ) : (
-                  <>
-                    <Link href="/auth" className="cta-button">
-                      Create Your Free RentCard
-                    </Link>
-                    <Link href="/auth" className="cta-button-secondary">
-                      For Landlords
-                    </Link>
-                  </>
+                  <Link href="/auth">
+                    <Button variant="default" className="bg-primary text-white">
+                      Login
+                    </Button>
+                  </Link>
                 )}
               </div>
             </div>
