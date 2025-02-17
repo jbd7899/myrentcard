@@ -22,6 +22,10 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Key } from "lucide-react";
+import { z } from "zod";
+
+const registerFormSchema = insertUserSchema;
+type RegisterFormValues = z.infer<typeof registerFormSchema>;
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
@@ -33,12 +37,12 @@ export default function AuthPage() {
     },
   });
 
-  const registerForm = useForm({
-    resolver: zodResolver(insertUserSchema),
+  const registerForm = useForm<RegisterFormValues>({
+    resolver: zodResolver(registerFormSchema),
     defaultValues: {
       username: "",
       password: "",
-      type: "tenant",
+      type: "tenant" as const,
       name: "",
       email: "",
       phone: "",
@@ -147,7 +151,7 @@ export default function AuthPage() {
                               <select
                                 {...field}
                                 className="w-full p-2 border rounded-md"
-                                value={field.value as 'tenant' | 'landlord'}
+                                value={field.value}
                               >
                                 <option value="tenant">Tenant</option>
                                 <option value="landlord">Landlord</option>

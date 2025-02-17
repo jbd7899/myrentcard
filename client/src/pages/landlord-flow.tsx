@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
-import { ArrowRight, Clock, Shield, Building2, ClipboardCheck } from 'lucide-react';
+import React, { useState, ChangeEvent, FormEvent } from 'react';
+import { ArrowRight, Clock, Shield, Building2, ClipboardCheck } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
 
+interface FormData {
+  businessName: string;
+  managerName: string;
+  businessEmail: string;
+  requirements: {
+    minCreditScore: string;
+    minIncome: string;
+    noEvictions: boolean;
+    cleanRentalHistory: boolean;
+  }
+}
+
 const LandlordFlow = () => {
   const [step, setStep] = useState(1);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     businessName: '',
     managerName: '',
     businessEmail: '',
@@ -18,7 +30,7 @@ const LandlordFlow = () => {
   });
   const { user } = useAuth();
 
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
       ...prev,
@@ -26,7 +38,7 @@ const LandlordFlow = () => {
     }));
   };
 
-  const handleRequirementsChange = (e) => {
+  const handleRequirementsChange = (e: ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     const fieldName = name.replace('requirements.', '');
 
@@ -39,7 +51,7 @@ const LandlordFlow = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setStep(3);
   };

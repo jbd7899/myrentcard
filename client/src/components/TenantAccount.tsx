@@ -4,11 +4,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Clock, Mail, Phone, Edit2, Share2, Eye, ExternalLink } from 'lucide-react';
 
+interface AccountInfo {
+  name: string;
+  email: string;
+  phone: string;
+  city: string;
+  lastUpdated: string;
+  loginMethod: string;
+}
+
+interface SharedLink {
+  recipient: string;
+  url: string;
+  lastViewed: string | null;
+  dateShared: string;
+}
+
 const TenantAccount = () => {
   const [activeTab, setActiveTab] = useState('profile');
-  
+
   // Sample data - would come from backend in real implementation
-  const accountInfo = {
+  const accountInfo: AccountInfo = {
     name: "Alex Thompson",
     email: "alex@example.com",
     phone: "(555) 123-4567",
@@ -17,7 +33,7 @@ const TenantAccount = () => {
     loginMethod: "Google"
   };
 
-  const sharedLinks = [
+  const sharedLinks: SharedLink[] = [
     {
       recipient: "Parkview Apartments",
       url: "myrentcard.com/share/abc123",
@@ -39,19 +55,19 @@ const TenantAccount = () => {
       {/* Navigation Tabs */}
       <div className="flex space-x-4 border-b">
         <button
-          className={'pb-2 px-4 ' + (activeTab === 'profile' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600')}
+          className={`pb-2 px-4 ${activeTab === 'profile' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600'}`}
           onClick={() => setActiveTab('profile')}
         >
           Profile
         </button>
         <button
-          className={'pb-2 px-4 ' + (activeTab === 'sharing' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600')}
+          className={`pb-2 px-4 ${activeTab === 'sharing' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600'}`}
           onClick={() => setActiveTab('sharing')}
         >
           Sharing History
         </button>
         <button
-          className={'pb-2 px-4 ' + (activeTab === 'references' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600')}
+          className={`pb-2 px-4 ${activeTab === 'references' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600'}`}
           onClick={() => setActiveTab('references')}
         >
           References
@@ -68,22 +84,22 @@ const TenantAccount = () => {
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Name</label>
-                <Input value={accountInfo.name} className="mt-1" disabled />
+                <Input value={accountInfo.name} className="mt-1" readOnly />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Email</label>
-                <Input value={accountInfo.email} className="mt-1" disabled />
+                <Input value={accountInfo.email} className="mt-1" readOnly />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Phone</label>
-                <Input value={accountInfo.phone} className="mt-1" disabled />
+                <Input value={accountInfo.phone} className="mt-1" readOnly />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Current City</label>
-                <Input value={accountInfo.city} className="mt-1" disabled />
+                <Input value={accountInfo.city} className="mt-1" readOnly />
               </div>
             </div>
-            
+
             <div className="bg-blue-50 p-4 rounded-lg flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Clock className="w-5 h-5 text-blue-500" />
@@ -184,7 +200,7 @@ const TenantAccount = () => {
                 <Share2 className="w-4 h-4" />
                 <span>Request New Reference</span>
               </Button>
-              
+
               <div className="bg-gray-50 p-4 rounded-lg text-center">
                 <p className="text-gray-600">No references collected yet. Share the reference request form with your previous landlords to start building your rental history.</p>
               </div>
