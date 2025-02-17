@@ -35,18 +35,29 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  // Updated session configuration
+  const isProduction = process.env.NODE_ENV === 'production';
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET!,
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
+    name: 'myrentcard.sid', // Custom cookie name
     cookie: {
-      secure: false, // Set to false since we're not using HTTPS in development
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+      secure: isProduction, // Only use secure cookies in production
+      httpOnly: true,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      sameSite: isProduction ? 'strict' : 'lax',
+      domain: isProduction ? '.myrentcard.com' : undefined // Set domain in production
+    },
+    proxy: isProduction // Enable proxy in production
   };
 
-  app.set("trust proxy", 1);
+  // Trust first proxy
+  if (isProduction) {
+    app.set("trust proxy", 1);
+  }
+
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
@@ -121,7 +132,7 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
         console.error("Login error:", err);
         return next(err);
