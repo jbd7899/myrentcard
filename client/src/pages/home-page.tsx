@@ -1,6 +1,7 @@
 import { Building2, Shield, Calendar, Users, Key, Lock } from "lucide-react";
 import { Link } from "wouter";
 import { FAQInitializer } from "@/components/FAQToggle";
+import { Button } from "@/components/ui/button";
 
 export default function HomePage() {
   return (
@@ -15,11 +16,14 @@ export default function HomePage() {
             <div className="hero-buttons">
               <Link href="/get-started" className="cta-button">Get Started – Create Your RentCard</Link>
               <Link href="/request-info" className="cta-button-secondary">Request Tenant Info Now</Link>
-              <div className="hero-link-wrapper" style={{width: '100%', textAlign: 'center', marginTop: '1rem'}}>
-                <Link href="/sample" className="sample-link" style={{color: '#4361ee', textDecoration: 'underline', fontSize: '0.875rem'}}>
+              <Link href="/sample-prescreening" className="block mt-4">
+                <Button 
+                  variant="outline" 
+                  className="w-full text-blue-600 border-blue-600 hover:bg-blue-50"
+                >
                   View Sample Pre-Screening Page
-                </Link>
-              </div>
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

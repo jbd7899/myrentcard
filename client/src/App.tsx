@@ -13,6 +13,7 @@ import LandlordFlow from "@/pages/landlord-flow";
 import TenantFlow from "@/pages/tenant-flow";
 import NotFound from "@/pages/not-found";
 import Layout from "@/components/Layout";
+import SamplePrescreening from "@/pages/sample-prescreening";
 
 function Router() {
   return (
@@ -22,6 +23,7 @@ function Router() {
         <Route path="/auth" component={AuthPage} />
         <Route path="/get-started" component={TenantFlow} />
         <Route path="/request-info" component={LandlordFlow} />
+        <Route path="/sample-prescreening" component={SamplePrescreening} />
         <ProtectedRoute path="/landlord" component={LandlordPage} />
         <ProtectedRoute path="/tenant" component={TenantPage} />
         <Route component={NotFound} />
