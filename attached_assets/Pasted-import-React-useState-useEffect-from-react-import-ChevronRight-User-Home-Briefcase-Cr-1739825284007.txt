@@ -1,73 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, User, Home, Briefcase, CreditCard } from 'lucide-react';
-import { useAuth } from '@/hooks/use-auth';
 
-type Pet = {
-  type: string;
-  breed: string;
-  weight: string;
-  age: string;
-}
-
-type FormData = {
-  personalInfo: {
-    firstName: string;
-    lastName: string;
-    email: string;
-    phone: string;
-    dateOfBirth: string;
-    hasPets: boolean;
-    pets: Pet[];
-  };
-  rentalHistory: {
-    currentAddress: string;
-    currentRent: string;
-    movingFromOutOfState: boolean;
-    hasLandlordReferences: boolean;
-    currentLandlord: {
-      name: string;
-      phone: string;
-      email: string;
-    };
-    hasEvictions: boolean;
-    evictionDetails: string;
-    hasUnpaidBills: boolean;
-    unpaidBillsDetails: string;
-  };
-  employment: {
-    employer: string;
-    position: string;
-    monthlyIncome: string;
-    yearsInJob: string;
-    hasPayStubs: boolean;
-    hasBankStatements: boolean;
-  };
-  rentalPreferences: {
-    isFlexibleDates: boolean;
-    flexibleMonths: string[];
-    desiredMoveInDate: string;
-    maxRent: string;
-    preferredLocations: string;
-    hasRoommates: boolean;
-    needsCosigner: boolean;
-  };
-}
-
-export default function RentCardForm() {
+const RentCardForm = () => {
   const [step, setStep] = useState(1);
   const [progress, setProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
-  const { user } = useAuth();
-
-  const sectionTitles: Record<number, string> = {
+  
+  const sectionTitles = {
     1: "Personal Information",
     2: "Rental History",
     3: "Income",
     4: "Rental Preferences",
     5: "Complete Your RentCard"
   };
-
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState({
     personalInfo: {
       firstName: '',
       lastName: '',
@@ -124,7 +70,7 @@ export default function RentCardForm() {
     calculateProgress();
   }, [step, isComplete]);
 
-  const handleInputChange = (section: keyof FormData, field: string, value: any) => {
+  const handleInputChange = (section, field, value) => {
     setFormData(prev => ({
       ...prev,
       [section]: {
@@ -138,7 +84,6 @@ export default function RentCardForm() {
     <div className="mt-4 p-4 bg-gray-50 rounded-lg">
       <h3 className="text-lg font-medium mb-4">Pet Information</h3>
       <button
-        type="button"
         onClick={() => {
           setFormData(prev => ({
             ...prev,
@@ -257,14 +202,12 @@ export default function RentCardForm() {
                 <label className="block text-sm font-medium mb-2">Do you have pets?</label>
                 <div className="flex gap-4">
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${formData.personalInfo.hasPets ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleInputChange('personalInfo', 'hasPets', true)}
                   >
                     Yes
                   </button>
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${!formData.personalInfo.hasPets ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleInputChange('personalInfo', 'hasPets', false)}
                   >
@@ -276,7 +219,6 @@ export default function RentCardForm() {
             {formData.personalInfo.hasPets && renderPetForm()}
           </div>
         );
-
       case 2:
         return (
           <div className="space-y-4">
@@ -303,14 +245,12 @@ export default function RentCardForm() {
                 <label className="block text-sm font-medium mb-2">Moving from out of state?</label>
                 <div className="flex gap-4">
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${formData.rentalHistory.movingFromOutOfState ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleInputChange('rentalHistory', 'movingFromOutOfState', true)}
                   >
                     Yes
                   </button>
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${!formData.rentalHistory.movingFromOutOfState ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleInputChange('rentalHistory', 'movingFromOutOfState', false)}
                   >
@@ -322,14 +262,12 @@ export default function RentCardForm() {
                 <label className="block text-sm font-medium mb-2">Any evictions?</label>
                 <div className="flex gap-4 mb-4">
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${formData.rentalHistory.hasEvictions ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleInputChange('rentalHistory', 'hasEvictions', true)}
                   >
                     Yes
                   </button>
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${!formData.rentalHistory.hasEvictions ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleInputChange('rentalHistory', 'hasEvictions', false)}
                   >
@@ -348,7 +286,6 @@ export default function RentCardForm() {
             </div>
           </div>
         );
-
       case 3:
         return (
           <div className="space-y-4">
@@ -384,14 +321,12 @@ export default function RentCardForm() {
                 <label className="block text-sm font-medium mb-2">Can provide pay stubs?</label>
                 <div className="flex gap-4">
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${formData.employment.hasPayStubs ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleInputChange('employment', 'hasPayStubs', true)}
                   >
                     Yes
                   </button>
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${!formData.employment.hasPayStubs ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleInputChange('employment', 'hasPayStubs', false)}
                   >
@@ -404,14 +339,12 @@ export default function RentCardForm() {
                   <label className="block text-sm font-medium mb-2">Can provide bank statements?</label>
                   <div className="flex gap-4">
                     <button
-                      type="button"
                       className={`px-4 py-2 rounded-lg ${formData.employment.hasBankStatements ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                       onClick={() => handleInputChange('employment', 'hasBankStatements', true)}
                     >
                       Yes
                     </button>
                     <button
-                      type="button"
                       className={`px-4 py-2 rounded-lg ${!formData.employment.hasBankStatements ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                       onClick={() => handleInputChange('employment', 'hasBankStatements', false)}
                     >
@@ -423,7 +356,6 @@ export default function RentCardForm() {
             </div>
           </div>
         );
-
       case 4:
         return (
           <div className="space-y-4">
@@ -432,16 +364,13 @@ export default function RentCardForm() {
                 <label className="block text-sm font-medium mb-2">Move-in Date Preference</label>
                 <div className="flex gap-4 mb-4">
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${!formData.rentalPreferences.isFlexibleDates ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleInputChange('rentalPreferences', 'isFlexibleDates', false)}
                   >
                     Specific Date
                   </button>
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${formData.rentalPreferences.isFlexibleDates ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
-                    onClick={() => handleInputChange('rentalPreferences', 'isFlexibleDates', true)}
                   >
                     I'm Flexible
                   </button>
@@ -459,7 +388,6 @@ export default function RentCardForm() {
                       'July', 'August', 'September', 'October', 'November', 'December'].map((month) => (
                       <button
                         key={month}
-                        type="button"
                         className={`p-2 rounded-lg ${
                           formData.rentalPreferences.flexibleMonths.includes(month)
                             ? 'bg-blue-600 text-white'
@@ -505,14 +433,12 @@ export default function RentCardForm() {
                 <label className="block text-sm font-medium mb-2">Will you have roommates?</label>
                 <div className="flex gap-4">
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${formData.rentalPreferences.hasRoommates ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleInputChange('rentalPreferences', 'hasRoommates', true)}
                   >
                     Yes
                   </button>
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${!formData.rentalPreferences.hasRoommates ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleInputChange('rentalPreferences', 'hasRoommates', false)}
                   >
@@ -524,14 +450,12 @@ export default function RentCardForm() {
                 <label className="block text-sm font-medium mb-2">Will you need a co-signer?</label>
                 <div className="flex gap-4">
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${formData.rentalPreferences.needsCosigner ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleInputChange('rentalPreferences', 'needsCosigner', true)}
                   >
                     Yes
                   </button>
                   <button
-                    type="button"
                     className={`px-4 py-2 rounded-lg ${!formData.rentalPreferences.needsCosigner ? 'bg-blue-600 text-white' : 'bg-gray-200'}`}
                     onClick={() => handleInputChange('rentalPreferences', 'needsCosigner', false)}
                   >
@@ -542,7 +466,6 @@ export default function RentCardForm() {
             </div>
           </div>
         );
-
       case 5:
         return (
           <div className="space-y-6 text-center">
@@ -589,7 +512,7 @@ export default function RentCardForm() {
                   Share RentCard Now
                 </button>
               </div>
-
+              
               <div className="bg-white p-8 rounded-xl shadow-lg border border-gray-100 hover:shadow-xl transition-shadow">
                 <div className="mb-6">
                   <div className="inline-block bg-blue-100 text-blue-600 px-3 py-1 rounded-full text-sm font-medium mb-4">
@@ -654,10 +577,10 @@ export default function RentCardForm() {
   };
 
   const icons = [
-    <User key="user" className="w-6 h-6" />,
-    <Home key="home" className="w-6 h-6" />,
-    <Briefcase key="briefcase" className="w-6 h-6" />,
-    <CreditCard key="credit-card" className="w-6 h-6" />
+    <User className="w-6 h-6" />,
+    <Home className="w-6 h-6" />,
+    <Briefcase className="w-6 h-6" />,
+    <CreditCard className="w-6 h-6" />
   ];
 
   return (
@@ -701,11 +624,10 @@ export default function RentCardForm() {
           <h2 className="text-2xl font-bold mb-6">{sectionTitles[step]}</h2>
         )}
         {renderStep()}
-
+        
         <div className="mt-8 flex justify-between">
           {step > 1 && (
             <button
-              type="button"
               onClick={() => setStep(step - 1)}
               className="px-6 py-2 bg-gray-200 rounded-lg hover:bg-gray-300"
             >
@@ -713,17 +635,16 @@ export default function RentCardForm() {
             </button>
           )}
           <button
-            type="button"
             onClick={() => {
-              if (step < 4) {
-                setStep(step + 1);
-              } else if (step === 4) {
-                setIsComplete(true);
-                setStep(5);
-              } else {
-                console.log('Complete form', formData);
-              }
-            }}
+            if (step < 4) {
+              setStep(step + 1);
+            } else if (step === 4) {
+              setIsComplete(true);
+              setStep(5);
+            } else {
+              console.log('Complete form', formData);
+            }
+          }}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 ml-auto flex items-center"
           >
             {step === 4 ? 'Create RentCard' : 'Next'}
@@ -733,4 +654,6 @@ export default function RentCardForm() {
       </div>
     </div>
   );
-}
+};
+
+export default RentCardForm;
