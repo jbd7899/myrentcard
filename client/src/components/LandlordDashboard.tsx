@@ -46,9 +46,12 @@ const LandlordDashboard = () => {
   });
 
   const createPropertyMutation = useMutation({
-    mutationFn: (propertyData: Omit<Property, 'id' | 'createdAt'>) => 
+    mutationFn: (propertyData: Omit<Property, 'id' | 'createdAt' | 'pageViews' | 'uniqueVisitors' | 'submissionCount'>) => 
       apiRequest('/api/properties', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
         body: JSON.stringify(propertyData)
       }),
     onSuccess: () => {
@@ -73,10 +76,10 @@ const LandlordDashboard = () => {
         }
       });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to add property",
+        description: "Failed to add property: " + error.message,
         variant: "destructive",
       });
     },
@@ -90,7 +93,7 @@ const LandlordDashboard = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const propertyData = {
       title: newProperty.title,
@@ -102,10 +105,13 @@ const LandlordDashboard = () => {
       requirements: newProperty.requirements,
       status: 'Available' as const,
       available: true,
-      landlordId: 1, // TODO: Get from auth context
     };
 
-    createPropertyMutation.mutateAsync(propertyData);
+    try {
+      await createPropertyMutation.mutateAsync(propertyData);
+    } catch (error) {
+      console.error('Failed to create property:', error);
+    }
   };
 
   if (isLoadingProperties || isLoadingApplications) {
@@ -253,6 +259,14 @@ const LandlordDashboard = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Size</span>
                   <span>{property.bedrooms}bd {property.bathrooms}ba</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Views</span>
+                  <span>{property.pageViews || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Applications</span>
+                  <span>{property.submissionCount || 0}</span>
                 </div>
                 <div className="flex space-x-2 pt-4">
                   <Button variant="outline" className="flex-1">
