@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
-import { Redirect } from "wouter";
+import { Redirect, useLocation } from "wouter";
 import {
   Card,
   CardContent,
@@ -23,12 +23,15 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Key } from "lucide-react";
 import { z } from "zod";
+import { useEffect } from "react";
 
 const registerFormSchema = insertUserSchema;
 type RegisterFormValues = z.infer<typeof registerFormSchema>;
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
+  const [location] = useLocation();
+  const fromTenantFlow = location.includes('from=tenant-flow');
 
   const loginForm = useForm({
     defaultValues: {
@@ -42,14 +45,29 @@ export default function AuthPage() {
     defaultValues: {
       username: "",
       password: "",
-      type: "tenant" as const,
+      type: fromTenantFlow ? "tenant" as const : "tenant" as const,
       name: "",
       email: "",
       phone: "",
     },
   });
 
+  // Load saved form data if coming from tenant flow
+  useEffect(() => {
+    if (fromTenantFlow) {
+      const savedData = localStorage.getItem('pendingRentCardData');
+      if (savedData) {
+        const parsedData = JSON.parse(savedData);
+        registerForm.setValue('name', `${parsedData.personalInfo.firstName} ${parsedData.personalInfo.lastName}`);
+        registerForm.setValue('email', parsedData.personalInfo.email);
+        registerForm.setValue('phone', parsedData.personalInfo.phone || ''); // Ensure phone is never null/undefined
+      }
+    }
+  }, [fromTenantFlow, registerForm]);
+
   if (user) {
+    // Clear saved form data after successful registration
+    localStorage.removeItem('pendingRentCardData');
     return <Redirect to="/" />;
   }
 
@@ -194,7 +212,7 @@ export default function AuthPage() {
                           <FormItem>
                             <FormLabel>Phone (optional)</FormLabel>
                             <FormControl>
-                              <Input type="tel" {...field} />
+                              <Input type="tel" {...field} value={field.value || ''} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
