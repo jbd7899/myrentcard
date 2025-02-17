@@ -2,7 +2,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertUserSchema } from "@shared/schema";
-import { Redirect, useLocation } from "wouter";
+import { Redirect } from "wouter";
 import {
   Card,
   CardContent,
@@ -22,16 +22,9 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Building2, Key } from "lucide-react";
-import { z } from "zod";
-import { useEffect } from "react";
-
-const registerFormSchema = insertUserSchema;
-type RegisterFormValues = z.infer<typeof registerFormSchema>;
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
-  const [location] = useLocation();
-  const fromTenantFlow = location.includes('from=tenant-flow');
 
   const loginForm = useForm({
     defaultValues: {
@@ -40,34 +33,19 @@ export default function AuthPage() {
     },
   });
 
-  const registerForm = useForm<RegisterFormValues>({
-    resolver: zodResolver(registerFormSchema),
+  const registerForm = useForm({
+    resolver: zodResolver(insertUserSchema),
     defaultValues: {
       username: "",
       password: "",
-      type: fromTenantFlow ? "tenant" as const : "tenant" as const,
+      type: "tenant",
       name: "",
       email: "",
       phone: "",
     },
   });
 
-  // Load saved form data if coming from tenant flow
-  useEffect(() => {
-    if (fromTenantFlow) {
-      const savedData = localStorage.getItem('pendingRentCardData');
-      if (savedData) {
-        const parsedData = JSON.parse(savedData);
-        registerForm.setValue('name', `${parsedData.personalInfo.firstName} ${parsedData.personalInfo.lastName}`);
-        registerForm.setValue('email', parsedData.personalInfo.email);
-        registerForm.setValue('phone', parsedData.personalInfo.phone || ''); // Ensure phone is never null/undefined
-      }
-    }
-  }, [fromTenantFlow, registerForm]);
-
   if (user) {
-    // Clear saved form data after successful registration
-    localStorage.removeItem('pendingRentCardData');
     return <Redirect to="/" />;
   }
 
@@ -169,7 +147,7 @@ export default function AuthPage() {
                               <select
                                 {...field}
                                 className="w-full p-2 border rounded-md"
-                                value={field.value}
+                                value={field.value as 'tenant' | 'landlord'}
                               >
                                 <option value="tenant">Tenant</option>
                                 <option value="landlord">Landlord</option>
@@ -212,7 +190,7 @@ export default function AuthPage() {
                           <FormItem>
                             <FormLabel>Phone (optional)</FormLabel>
                             <FormControl>
-                              <Input type="tel" {...field} value={field.value || ''} />
+                              <Input type="tel" {...field} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>

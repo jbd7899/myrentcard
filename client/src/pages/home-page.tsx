@@ -13,8 +13,8 @@ export default function HomePage() {
             <h1>One Rental Form. Multiple Landlords. Easy Pre-Screening.</h1>
             <p>Fill out your rental profile once and send it to landlords instantly via email or text - completely free. Save time and get ahead in the rental process. No account needed to start.</p>
             <div className="hero-buttons">
-              <Link href="/tenant-flow" className="cta-button">Get Started – Create Your RentCard</Link>
-              <Link href="/landlord-flow" className="cta-button-secondary">Request Tenant Info Now</Link>
+              <Link href="/get-started" className="cta-button">Get Started – Create Your RentCard</Link>
+              <Link href="/request-info" className="cta-button-secondary">Request Tenant Info Now</Link>
               <div className="hero-link-wrapper" style={{width: '100%', textAlign: 'center', marginTop: '1rem'}}>
                 <Link href="/sample" className="sample-link" style={{color: '#4361ee', textDecoration: 'underline', fontSize: '0.875rem'}}>
                   View Sample Pre-Screening Page

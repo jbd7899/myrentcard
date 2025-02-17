@@ -1,14 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { ChevronRight, User, Home, Briefcase, CreditCard } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
-import { useLocation } from 'wouter';
 
 type Pet = {
   type: string;
   breed: string;
   weight: string;
   age: string;
-};
+}
 
 type FormData = {
   personalInfo: {
@@ -52,14 +51,13 @@ type FormData = {
     hasRoommates: boolean;
     needsCosigner: boolean;
   };
-};
+}
 
 export default function RentCardForm() {
   const [step, setStep] = useState(1);
   const [progress, setProgress] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
   const { user } = useAuth();
-  const [, setLocation] = useLocation();
 
   const sectionTitles: Record<number, string> = {
     1: "Personal Information",
@@ -457,7 +455,7 @@ export default function RentCardForm() {
                   />
                 ) : (
                   <div className="grid grid-cols-2 gap-4">
-                    {['January', 'February', 'March', 'April', 'May', 'June',
+                    {['January', 'February', 'March', 'April', 'May', 'June', 
                       'July', 'August', 'September', 'October', 'November', 'December'].map((month) => (
                       <button
                         key={month}
@@ -546,15 +544,6 @@ export default function RentCardForm() {
         );
 
       case 5:
-        const handleShareWithoutAccount = () => {
-          const sharingId = Math.random().toString(36).substring(2, 15);
-          window.alert(`Your RentCard has been created! Share this link: myrentcard.com/share/${sharingId}`);
-        };
-
-        const handleCreateAccount = () => {
-          localStorage.setItem('pendingRentCardData', JSON.stringify(formData));
-          setLocation('/auth?from=tenant-flow');
-        };
         return (
           <div className="space-y-6 text-center">
             <div className="mb-12">
@@ -594,7 +583,7 @@ export default function RentCardForm() {
                   </ul>
                 </div>
                 <button
-                  onClick={handleShareWithoutAccount}
+                  onClick={() => console.log('Share without account')}
                   className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Share RentCard Now
@@ -632,7 +621,7 @@ export default function RentCardForm() {
                   </ul>
                 </div>
                 <button
-                  onClick={handleCreateAccount}
+                  onClick={() => console.log('Create account')}
                   className="w-full px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
                 >
                   Create Free Account

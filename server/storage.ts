@@ -7,17 +7,17 @@ const MemoryStore = createMemoryStore(session);
 
 export interface IStorage {
   sessionStore: session.Store;
-
+  
   // User operations
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
-
+  
   // Property operations
   createProperty(property: Omit<Property, "id" | "createdAt">): Promise<Property>;
   getAllProperties(): Promise<Property[]>;
   getPropertyById(id: number): Promise<Property | undefined>;
-
+  
   // Application operations
   createApplication(application: Omit<Application, "id" | "createdAt">): Promise<Application>;
   getTenantApplications(tenantId: number): Promise<Application[]>;
@@ -64,8 +64,7 @@ export class MemStorage implements IStorage {
     const user: User = { 
       ...insertUser, 
       id,
-      createdAt: new Date(),
-      phone: insertUser.phone || null  // Ensure phone is never undefined
+      createdAt: new Date()
     };
     this.users.set(id, user);
     return user;
@@ -76,8 +75,7 @@ export class MemStorage implements IStorage {
     const property: Property = {
       ...insertProperty,
       id,
-      createdAt: new Date(),
-      available: insertProperty.available ?? true  // Default to true if not provided
+      createdAt: new Date()
     };
     this.properties.set(id, property);
     return property;
@@ -96,11 +94,7 @@ export class MemStorage implements IStorage {
     const application: Application = {
       ...insertApplication,
       id,
-      createdAt: new Date(),
-      message: insertApplication.message || null,
-      creditScore: insertApplication.creditScore || null,
-      income: insertApplication.income || null,
-      moveInDate: insertApplication.moveInDate || null
+      createdAt: new Date()
     };
     this.applications.set(id, application);
     return application;
@@ -116,7 +110,7 @@ export class MemStorage implements IStorage {
     const landlordProperties = Array.from(this.properties.values())
       .filter((prop) => prop.landlordId === landlordId)
       .map((prop) => prop.id);
-
+    
     return Array.from(this.applications.values())
       .filter((app) => landlordProperties.includes(app.propertyId));
   }
