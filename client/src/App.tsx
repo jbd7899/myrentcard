@@ -9,6 +9,8 @@ import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import LandlordPage from "@/pages/landlord-page";
 import TenantPage from "@/pages/tenant-page";
+import LandlordFlow from "@/pages/landlord-flow";
+import TenantFlow from "@/pages/tenant-flow";
 import NotFound from "@/pages/not-found";
 import Layout from "@/components/Layout";
 
@@ -18,6 +20,8 @@ function Router() {
       <Switch>
         <Route path="/" component={HomePage} />
         <Route path="/auth" component={AuthPage} />
+        <Route path="/get-started" component={TenantFlow} />
+        <Route path="/request-info" component={LandlordFlow} />
         <ProtectedRoute path="/landlord" component={LandlordPage} />
         <ProtectedRoute path="/tenant" component={TenantPage} />
         <Route component={NotFound} />
