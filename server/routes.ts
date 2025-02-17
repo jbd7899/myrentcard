@@ -49,19 +49,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     fs.mkdirSync('./uploads');
   }
 
-  // Create test landlord user if it doesn't exist
-  const testLandlord = await storage.getUserByUsername("testlandlord");
-  if (!testLandlord) {
-    await storage.createUser({
-      username: "testlandlord",
-      password: await hashPassword("testpass"),
-      type: "landlord",
-      name: "Test Landlord",
-      email: "landlord@example.com",
-      phone: "555-0123"
-    });
-  }
-
   // Image upload route
   app.post("/api/upload", upload.single('image'), (req, res) => {
     if (!req.file) {
