@@ -23,6 +23,7 @@ export const properties = pgTable("properties", {
   bedrooms: integer("bedrooms").notNull(),
   bathrooms: integer("bathrooms").notNull(),
   requirements: jsonb("requirements").notNull(),
+  status: text("status", { enum: ["Available", "Rented", "Pending"] }).notNull().default("Available"),
   available: boolean("available").default(true),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -39,13 +40,10 @@ export const applications = pgTable("applications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  type: true,
-  name: true,
-  email: true,
-  phone: true,
+// Create insert schemas
+export const insertUserSchema = createInsertSchema(users).omit({
+  id: true,
+  createdAt: true,
 });
 
 export const insertPropertySchema = createInsertSchema(properties).omit({
@@ -58,7 +56,18 @@ export const insertApplicationSchema = createInsertSchema(applications).omit({
   createdAt: true,
 });
 
+// Export types
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type User = typeof users.$inferSelect;
 export type Property = typeof properties.$inferSelect;
 export type Application = typeof applications.$inferSelect;
+
+// Property requirements schema
+export const propertyRequirementsSchema = z.object({
+  minCreditScore: z.number().min(300).max(850).optional(),
+  minIncome: z.number().min(0).optional(),
+  noEvictions: z.boolean().optional(),
+  cleanRentalHistory: z.boolean().optional(),
+});
+
+export type PropertyRequirements = z.infer<typeof propertyRequirementsSchema>;
