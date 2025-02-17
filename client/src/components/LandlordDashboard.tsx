@@ -5,7 +5,8 @@ import { Plus, Building2, Users } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import type { Property, PropertyRequirements } from '@shared/schema';
+import type { Property, PropertyRequirements, Application } from '@shared/schema';
+import PropertyAnalytics from './PropertyAnalytics';
 
 interface NewPropertyFormData {
   title: string;
@@ -36,8 +37,12 @@ const LandlordDashboard = () => {
     }
   });
 
-  const { data: properties, isLoading } = useQuery<Property[]>({
+  const { data: properties, isLoading: isLoadingProperties } = useQuery<Property[]>({
     queryKey: ['/api/properties'],
+  });
+
+  const { data: applications, isLoading: isLoadingApplications } = useQuery<Application[]>({
+    queryKey: ['/api/applications'],
   });
 
   const createPropertyMutation = useMutation({
@@ -100,17 +105,17 @@ const LandlordDashboard = () => {
       landlordId: 1, // TODO: Get from auth context
     };
 
-    createPropertyMutation.mutate(propertyData);
+    createPropertyMutation.mutateAsync(propertyData);
   };
 
-  if (isLoading) {
-    return <div className="p-8">Loading properties...</div>;
+  if (isLoadingProperties || isLoadingApplications) {
+    return <div className="p-8">Loading dashboard data...</div>;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">My Properties</h2>
+        <h2 className="text-2xl font-semibold">Property Dashboard</h2>
         <Button 
           onClick={() => setShowAddProperty(true)}
           className="flex items-center space-x-2"
@@ -120,6 +125,15 @@ const LandlordDashboard = () => {
         </Button>
       </div>
 
+      {/* Analytics Section */}
+      {properties && applications && (
+        <PropertyAnalytics 
+          properties={properties} 
+          applications={applications} 
+        />
+      )}
+
+      {/* Add Property Form */}
       {showAddProperty && (
         <Card className="p-6">
           <CardHeader>
@@ -217,6 +231,7 @@ const LandlordDashboard = () => {
         </Card>
       )}
 
+      {/* Property List */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {properties?.map((property) => (
           <Card key={property.id}>

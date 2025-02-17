@@ -32,6 +32,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Property routes
   app.get("/api/properties", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(403);
+    }
     const properties = await storage.getAllProperties();
     res.json(properties);
   });
@@ -49,11 +52,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     const property = await storage.createProperty({
       ...validation.data,
       landlordId: req.user.id,
+      status: "Available",
     });
     res.status(201).json(property);
   });
 
   // Application routes
+  app.get("/api/applications", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(403);
+    }
+
+    let applications;
+    if (req.user.type === "tenant") {
+      applications = await storage.getTenantApplications(req.user.id);
+    } else if (req.user.type === "landlord") {
+      applications = await storage.getLandlordApplications(req.user.id);
+    } else {
+      return res.sendStatus(403);
+    }
+
+    res.json(applications);
+  });
+
   app.post("/api/applications", async (req, res) => {
     if (!req.isAuthenticated() || req.user.type !== "tenant") {
       return res.sendStatus(403);
@@ -70,24 +91,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       status: "pending",
     });
     res.status(201).json(application);
-  });
-
-  app.get("/api/applications/tenant", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.type !== "tenant") {
-      return res.sendStatus(403);
-    }
-
-    const applications = await storage.getTenantApplications(req.user.id);
-    res.json(applications);
-  });
-
-  app.get("/api/applications/landlord", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.type !== "landlord") {
-      return res.sendStatus(403);
-    }
-
-    const applications = await storage.getLandlordApplications(req.user.id);
-    res.json(applications);
   });
 
   const httpServer = createServer(app);
