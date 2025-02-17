@@ -1,9 +1,11 @@
-import { Building2, Shield, Calendar, Users, Key } from "lucide-react";
+import { Building2, Shield, Calendar, Users, Key, Lock } from "lucide-react";
 import { Link } from "wouter";
+import { FAQInitializer } from "@/components/FAQToggle";
 
 export default function HomePage() {
   return (
     <div>
+      <FAQInitializer />
       {/* Hero Section */}
       <section className="hero">
         <div className="container">
@@ -89,6 +91,24 @@ export default function HomePage() {
                   <p>When you find a great apartment, send your profile immediately—before other applicants even start their paperwork.</p>
                 </div>
               </div>
+              <div className="benefit-item">
+                <div className="benefit-icon">
+                  <Lock className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold mb-2">Control Your Information</h4>
+                  <p>Choose what to share with each landlord and maintain ownership of your rental profile and history.</p>
+                </div>
+              </div>
+              <div className="benefit-item">
+                <div className="benefit-icon">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold mb-2">Build Your Rental Reputation</h4>
+                  <p>Collect references and reviews from previous landlords to strengthen your application for future rentals.</p>
+                </div>
+              </div>
             </div>
             <div className="benefit-column">
               <div className="column-title">
@@ -110,6 +130,69 @@ export default function HomePage() {
                 <div>
                   <h4 className="font-bold mb-2">Save Time & Resources</h4>
                   <p>Eliminate hours spent on phone calls, emails, and sorting through incomplete applications.</p>
+                </div>
+              </div>
+              <div className="benefit-item">
+                <div className="benefit-icon">
+                  <Shield className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold mb-2">Verify Tenant History</h4>
+                  <p>Access previous landlord reviews and references to make confident leasing decisions.</p>
+                </div>
+              </div>
+              <div className="benefit-item">
+                <div className="benefit-icon">
+                  <Calendar className="h-5 w-5" />
+                </div>
+                <div>
+                  <h4 className="font-bold mb-2">Direct Communication</h4>
+                  <p>Communicate directly with pre-screened tenants through our secure messaging system.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section */}
+      <section id="faq" className="faq">
+        <div className="container">
+          <div className="section-title">
+            <h2>Frequently Asked Questions</h2>
+            <p>Get quick answers to common questions about MyRentCard</p>
+          </div>
+          <div className="faq-container">
+            <div className="faq-item">
+              <div className="faq-question">
+                Is my information secure?
+                <span className="faq-toggle">▼</span>
+              </div>
+              <div className="faq-answer">
+                <div className="faq-answer-content">
+                  Yes, we use bank-level encryption to protect your data. You have full control over who sees your information and can revoke access at any time.
+                </div>
+              </div>
+            </div>
+            <div className="faq-item">
+              <div className="faq-question">
+                How much does it cost?
+                <span className="faq-toggle">▼</span>
+              </div>
+              <div className="faq-answer">
+                <div className="faq-answer-content">
+                  Creating and sharing your RentCard is completely free. You can use all core features to apply for rentals at no cost. Optional premium features like verified employment and credit reports are available but not required.
+                </div>
+              </div>
+            </div>
+            <div className="faq-item">
+              <div className="faq-question">
+                Can landlords see my information without permission?
+                <span className="faq-toggle">▼</span>
+              </div>
+              <div className="faq-answer">
+                <div className="faq-answer-content">
+                  No, you maintain full control of your information. Landlords can only see what you choose to share with them through our secure sharing system.
                 </div>
               </div>
             </div>
