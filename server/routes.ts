@@ -6,6 +6,10 @@ import { insertPropertySchema, insertApplicationSchema, insertUserSchema } from 
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
 import { sql } from "drizzle-orm";
+import multer from "multer";
+import path from "path";
+import express from 'express';
+import fs from 'fs';
 
 const scryptAsync = promisify(scrypt);
 
@@ -15,21 +19,47 @@ async function hashPassword(password: string) {
   return `${buf.toString("hex")}.${salt}`;
 }
 
+// Configure multer for file uploads
+const upload = multer({
+  storage: multer.diskStorage({
+    destination: "./uploads",
+    filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, uniqueSuffix + path.extname(file.originalname));
+    }
+  }),
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (allowedTypes.includes(file.mimetype)) {
+      cb(null, true);
+    } else {
+      cb(new Error('Invalid file type'));
+    }
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB limit
+  }
+});
+
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
 
-  // Create sample tenant user if it doesn't exist
-  const existingUser = await storage.getUserByUsername("test");
-  if (!existingUser) {
-    await storage.createUser({
-      username: "test",
-      password: await hashPassword("test"),
-      type: "tenant",
-      name: "Test User",
-      email: "test@example.com",
-      phone: "555-0123"
-    });
+  // Create uploads directory if it doesn't exist
+  if (!fs.existsSync('./uploads')) {
+    fs.mkdirSync('./uploads');
   }
+
+  // Image upload route
+  app.post("/api/upload", upload.single('image'), (req, res) => {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+    const imageUrl = `/uploads/${req.file.filename}`;
+    res.json({ url: imageUrl });
+  });
+
+  // Serve uploaded files
+  app.use('/uploads', express.static('uploads'));
 
   // Property routes
   app.get("/api/properties", async (req, res) => {

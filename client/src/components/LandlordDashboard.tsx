@@ -1,21 +1,20 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Building2, Users } from 'lucide-react';
+import { Plus, Building2, Users, Upload } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
 import type { Property, PropertyRequirements, Application } from '@shared/schema';
 import PropertyAnalytics from './PropertyAnalytics';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 interface NewPropertyFormData {
   title: string;
   description: string;
   imageUrl: string;
-  rent: string;
   address: string;
-  bedrooms: string;
-  bathrooms: string;
   units: string;
   parkingSpaces: string;
   requirements: PropertyRequirements;
@@ -25,19 +24,15 @@ const LandlordDashboard = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [showAddProperty, setShowAddProperty] = useState(false);
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
   const [newProperty, setNewProperty] = useState<NewPropertyFormData>({
     title: '',
     description: '',
     imageUrl: '',
-    rent: '',
     address: '',
-    bedrooms: '',
-    bathrooms: '',
     units: '',
     parkingSpaces: '',
     requirements: {
-      minCreditScore: 650,
-      minIncome: 3000,
       noEvictions: true,
       cleanRentalHistory: true
     }
@@ -52,14 +47,31 @@ const LandlordDashboard = () => {
   });
 
   const createPropertyMutation = useMutation({
-    mutationFn: (propertyData: Omit<Property, 'id' | 'createdAt' | 'pageViews' | 'uniqueVisitors' | 'submissionCount'>) =>
-      apiRequest('/api/properties', {
+    mutationFn: async (propertyData: Omit<Property, 'id' | 'createdAt' | 'pageViews' | 'uniqueVisitors' | 'submissionCount'>) => {
+      // First upload the image if selected
+      let imageUrl = null;
+      if (selectedImage) {
+        const formData = new FormData();
+        formData.append('image', selectedImage);
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        });
+        if (!uploadResponse.ok) {
+          throw new Error('Failed to upload image');
+        }
+        const { url } = await uploadResponse.json();
+        imageUrl = url;
+      }
+
+      return apiRequest('/api/properties', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(propertyData)
-      }),
+        body: JSON.stringify({ ...propertyData, imageUrl })
+      });
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
       toast({
@@ -67,19 +79,15 @@ const LandlordDashboard = () => {
         description: "Property added successfully",
       });
       setShowAddProperty(false);
+      setSelectedImage(null);
       setNewProperty({
         title: '',
         description: '',
         imageUrl: '',
-        rent: '',
         address: '',
-        bedrooms: '',
-        bathrooms: '',
         units: '',
         parkingSpaces: '',
         requirements: {
-          minCreditScore: 650,
-          minIncome: 3000,
           noEvictions: true,
           cleanRentalHistory: true
         }
@@ -102,16 +110,19 @@ const LandlordDashboard = () => {
     }));
   };
 
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setSelectedImage(e.target.files[0]);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const propertyData = {
       title: newProperty.title,
       description: newProperty.description,
-      imageUrl: newProperty.imageUrl || null,
-      rent: parseInt(newProperty.rent),
+      imageUrl: null, // Will be set after upload
       address: newProperty.address,
-      bedrooms: parseInt(newProperty.bedrooms),
-      bathrooms: parseInt(newProperty.bathrooms),
       units: parseInt(newProperty.units),
       parkingSpaces: parseInt(newProperty.parkingSpaces),
       requirements: newProperty.requirements,
@@ -161,115 +172,86 @@ const LandlordDashboard = () => {
           <CardContent>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium mb-1">Title</label>
-                <input
-                  type="text"
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
                   name="title"
                   value={newProperty.title}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg"
                   required
                 />
               </div>
+
               <div>
-                <label className="block text-sm font-medium mb-1">Image URL</label>
-                <input
-                  type="url"
-                  name="imageUrl"
-                  value={newProperty.imageUrl}
-                  onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="https://example.com/image.jpg"
-                />
+                <Label htmlFor="image">Property Image</Label>
+                <div className="mt-1 flex items-center gap-4">
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="flex-1"
+                  />
+                  {selectedImage && (
+                    <img
+                      src={URL.createObjectURL(selectedImage)}
+                      alt="Preview"
+                      className="h-20 w-20 object-cover rounded-lg"
+                    />
+                  )}
+                </div>
               </div>
+
               <div>
-                <label className="block text-sm font-medium mb-1">Description</label>
+                <Label htmlFor="description">Description</Label>
                 <textarea
+                  id="description"
                   name="description"
                   value={newProperty.description}
                   onChange={handleInputChange}
-                  className="w-full p-2 border rounded-lg"
-                  rows={3}
+                  className="w-full p-2 border rounded-lg min-h-[100px]"
                   required
                 />
               </div>
+
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium mb-1">Number of Units</label>
-                  <input
+                  <Label htmlFor="units">Number of Units</Label>
+                  <Input
+                    id="units"
                     type="number"
                     name="units"
                     value={newProperty.units}
                     onChange={handleInputChange}
-                    className="w-full p-2 border rounded-lg"
                     required
                     min="1"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium mb-1">Parking Spaces</label>
-                  <input
+                  <Label htmlFor="parkingSpaces">Parking Spaces</Label>
+                  <Input
+                    id="parkingSpaces"
                     type="number"
                     name="parkingSpaces"
                     value={newProperty.parkingSpaces}
                     onChange={handleInputChange}
-                    className="w-full p-2 border rounded-lg"
                     required
                     min="0"
                   />
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Monthly Rent</label>
-                  <input
-                    type="number"
-                    name="rent"
-                    value={newProperty.rent}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border rounded-lg"
-                    required
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Address</label>
-                  <input
-                    type="text"
-                    name="address"
-                    value={newProperty.address}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border rounded-lg"
-                    required
-                  />
-                </div>
+
+              <div>
+                <Label htmlFor="address">Address</Label>
+                <Input
+                  id="address"
+                  name="address"
+                  value={newProperty.address}
+                  onChange={handleInputChange}
+                  required
+                />
               </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">Bedrooms</label>
-                  <input
-                    type="number"
-                    name="bedrooms"
-                    value={newProperty.bedrooms}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border rounded-lg"
-                    required
-                    min="0"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">Bathrooms</label>
-                  <input
-                    type="number"
-                    name="bathrooms"
-                    value={newProperty.bathrooms}
-                    onChange={handleInputChange}
-                    className="w-full p-2 border rounded-lg"
-                    required
-                    min="0"
-                  />
-                </div>
-              </div>
+
               <div className="flex justify-end space-x-2">
                 <Button
                   type="button"
@@ -322,14 +304,6 @@ const LandlordDashboard = () => {
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Parking</span>
                   <span>{property.parkingSpaces} spaces</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Rent</span>
-                  <span>${property.rent}/month</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Size</span>
-                  <span>{property.bedrooms}bd {property.bathrooms}ba</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Views</span>

@@ -22,10 +22,6 @@ export const properties = pgTable("properties", {
   address: text("address").notNull(),
   units: integer("units").notNull(),
   parkingSpaces: integer("parking_spaces").notNull(),
-  rent: integer("rent").notNull(),
-  bedrooms: integer("bedrooms").notNull(),
-  bathrooms: integer("bathrooms").notNull(),
-  requirements: jsonb("requirements").notNull(),
   status: text("status", { enum: ["Available", "Rented", "Pending"] }).notNull().default("Available"),
   available: boolean("available").default(true),
   pageViews: integer("page_views").default(0),
@@ -39,9 +35,6 @@ export const applications = pgTable("applications", {
   propertyId: integer("property_id").notNull(),
   tenantId: integer("tenant_id").notNull(),
   status: text("status", { enum: ["pending", "approved", "rejected"] }).notNull(),
-  creditScore: integer("credit_score"),
-  income: integer("income"),
-  moveInDate: timestamp("move_in_date"),
   message: text("message"),
   createdAt: timestamp("created_at").defaultNow(),
 });
@@ -73,8 +66,6 @@ export type Application = typeof applications.$inferSelect;
 
 // Property requirements schema
 export const propertyRequirementsSchema = z.object({
-  minCreditScore: z.number().min(300).max(850).optional(),
-  minIncome: z.number().min(0).optional(),
   noEvictions: z.boolean().optional(),
   cleanRentalHistory: z.boolean().optional(),
 });
