@@ -2,6 +2,13 @@ import React, { useState } from 'react';
 import { ArrowRight, Clock, Shield, Building2, ClipboardCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useAuth } from '@/hooks/use-auth';
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { insertUserSchema } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 
 const LandlordFlow = () => {
   const [step, setStep] = useState(1);
@@ -16,7 +23,28 @@ const LandlordFlow = () => {
       cleanRentalHistory: true,
     }
   });
-  const { user } = useAuth();
+  const { user, registerMutation } = useAuth();
+  const { toast } = useToast();
+
+  const registerForm = useForm({
+    defaultValues: {
+      username: "",
+      password: "",
+      confirmPassword: "",
+      type: "landlord",
+      name: "",
+      email: "",
+      phone: "",
+    },
+    resolver: zodResolver(
+      insertUserSchema.extend({
+        confirmPassword: insertUserSchema.shape.password,
+      }).refine((data) => data.password === data.confirmPassword, {
+        message: "Passwords don't match",
+        path: ["confirmPassword"],
+      })
+    ),
+  });
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -42,6 +70,25 @@ const LandlordFlow = () => {
   const handleSubmit = (e) => {
     e.preventDefault();
     setStep(3);
+  };
+
+  const handleRegister = async (data) => {
+    try {
+      await registerMutation.mutateAsync({
+        ...data,
+        type: "landlord",
+      });
+      toast({
+        title: "Account created successfully",
+        description: "You can now manage your properties and view applications",
+      });
+    } catch (error) {
+      toast({
+        title: "Error creating account",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
   };
 
   const LandingPage = () => (
@@ -283,12 +330,12 @@ const LandlordFlow = () => {
                   </li>
                 </ul>
                 <div className="pt-4">
-                  <button 
+                  <Button 
                     onClick={() => setShowAccountForm(!showAccountForm)}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                    className="w-full"
                   >
                     Create Free Account
-                  </button>
+                  </Button>
                   <p className="text-sm text-center mt-2 text-gray-500">
                     Optional premium features available for power users
                   </p>
@@ -304,34 +351,95 @@ const LandlordFlow = () => {
               <CardTitle>Account Details</CardTitle>
             </CardHeader>
             <CardContent>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Password
-                  </label>
-                  <input
-                    type="password"
-                    className="w-full p-2 border rounded-lg"
-                    required
+              <Form {...registerForm}>
+                <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
+                  <FormField
+                    control={registerForm.control}
+                    name="username"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Username</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium mb-1">
-                    Confirm Password
-                  </label>
-                  <input
-                    type="password"
-                    className="w-full p-2 border rounded-lg"
-                    required
+                  <FormField
+                    control={registerForm.control}
+                    name="password"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <button 
-                  type="submit"
-                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Complete Account Setup
-                </button>
-              </form>
+                  <FormField
+                    control={registerForm.control}
+                    name="confirmPassword"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Confirm Password</FormLabel>
+                        <FormControl>
+                          <Input type="password" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={registerForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Full Name</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={registerForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={registerForm.control}
+                    name="phone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Phone (Optional)</FormLabel>
+                        <FormControl>
+                          <Input {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button 
+                    type="submit"
+                    className="w-full"
+                    disabled={registerMutation.isPending}
+                  >
+                    {registerMutation.isPending ? "Creating Account..." : "Complete Account Setup"}
+                  </Button>
+                </form>
+              </Form>
             </CardContent>
           </Card>
         )}
@@ -341,9 +449,9 @@ const LandlordFlow = () => {
             <div className="bg-gray-50 p-4 rounded-lg break-all text-center">
               <p className="font-mono text-gray-800">{screeningLink}</p>
             </div>
-            <button className="w-full mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+            <Button className="w-full mt-4">
               Copy Link
-            </button>
+            </Button>
           </CardContent>
         </Card>
 
