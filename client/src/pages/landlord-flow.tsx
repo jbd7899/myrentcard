@@ -10,6 +10,278 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+// Success page component moved outside to prevent form state issues
+const SuccessPage = ({ formData }: { formData: any }) => {
+  const [showAccountForm, setShowAccountForm] = useState(false);
+  const screeningLink = `https://myrentcard.com/apply/${Math.random().toString(36).substr(2, 9)}`;
+  const { user, registerMutation } = useAuth();
+  const { toast } = useToast();
+
+  const registerForm = useForm({
+    defaultValues: {
+      username: "",
+      password: "",
+      confirmPassword: "",
+      type: "landlord",
+      name: formData.managerName || "",
+      email: formData.businessEmail || "",
+      phone: "",
+    },
+    resolver: zodResolver(
+      insertUserSchema.extend({
+        confirmPassword: insertUserSchema.shape.password,
+      }).refine((data) => data.password === data.confirmPassword, {
+        message: "Passwords don't match",
+        path: ["confirmPassword"],
+      })
+    ),
+  });
+
+  const handleRegister = async (data: any) => {
+    try {
+      await registerMutation.mutateAsync({
+        ...data,
+        type: "landlord",
+      });
+      toast({
+        title: "Account created successfully",
+        description: "You can now manage your properties and view applications",
+      });
+    } catch (error: any) {
+      toast({
+        title: "Error creating account",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-12">
+      {/* Success Page Content */}
+      <div className="text-center mb-8">
+        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <ClipboardCheck className="w-8 h-8 text-green-600" />
+        </div>
+        <h2 className="text-3xl font-bold mb-4">Your Pre-Screening Page is Ready!</h2>
+        <p className="text-gray-600 mb-4">
+          Share this link with potential tenants to receive instant RentCard submissions
+        </p>
+        <div className="inline-block bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
+          <p className="text-sm text-blue-800">
+            ✨ Recommended: Create a free account to manage submissions and update your screening page
+          </p>
+        </div>
+      </div>
+
+      {user ? (
+        <Card className="p-6 border-2 border-blue-100">
+          <CardHeader>
+            <CardTitle>Account Connected</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <p className="text-green-600 text-center mb-4">Your account is already connected!</p>
+          </CardContent>
+        </Card>
+      ) : (
+        <Card className="p-6 border-2 border-blue-100">
+          <CardHeader>
+            <CardTitle>Create Your Free Account</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-gray-600">With a free account you can:</p>
+              <ul className="space-y-2">
+                <li className="flex items-center">
+                  <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
+                  View and manage tenant submissions
+                </li>
+                <li className="flex items-center">
+                  <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
+                  Update your screening requirements anytime
+                </li>
+                <li className="flex items-center">
+                  <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
+                  Save your page for future properties
+                </li>
+                <li className="flex items-center">
+                  <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
+                  Access basic analytics and insights
+                </li>
+              </ul>
+              <div className="pt-4">
+                <Button 
+                  onClick={() => setShowAccountForm(!showAccountForm)}
+                  className="w-full"
+                >
+                  Create Free Account
+                </Button>
+                <p className="text-sm text-center mt-2 text-gray-500">
+                  Optional premium features available for power users
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {showAccountForm && !user && (
+        <Card className="p-6 mt-6">
+          <CardHeader>
+            <CardTitle>Account Details</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Form {...registerForm}>
+              <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
+                <FormField
+                  control={registerForm.control}
+                  name="username"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Username</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={registerForm.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={registerForm.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm Password</FormLabel>
+                      <FormControl>
+                        <Input type="password" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={registerForm.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={registerForm.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email</FormLabel>
+                      <FormControl>
+                        <Input type="email" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={registerForm.control}
+                  name="phone"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone (Optional)</FormLabel>
+                      <FormControl>
+                        <Input {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button 
+                  type="submit"
+                  className="w-full"
+                  disabled={registerMutation.isPending}
+                >
+                  {registerMutation.isPending ? "Creating Account..." : "Complete Account Setup"}
+                </Button>
+              </form>
+            </Form>
+          </CardContent>
+        </Card>
+      )}
+
+      <Card className="p-6 mt-8">
+        <CardContent>
+          <div className="bg-gray-50 p-4 rounded-lg break-all text-center">
+            <p className="font-mono text-gray-800">{screeningLink}</p>
+          </div>
+          <Button className="w-full mt-4">
+            Copy Link
+          </Button>
+        </CardContent>
+      </Card>
+
+      <Card className="p-6 mt-8">
+        <CardHeader>
+          <CardTitle>How it works</CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-start space-x-4">
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center">
+              1
+            </div>
+            <div>
+              <h3 className="font-semibold mb-1">Share your link</h3>
+              <p className="text-gray-600">
+                Add this link to your property listings or share directly with interested tenants
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-4">
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center">
+              2
+            </div>
+            <div>
+              <h3 className="font-semibold mb-1">Tenants submit instantly</h3>
+              <p className="text-gray-600">
+                Interested tenants can submit their complete RentCard profile with one click
+              </p>
+            </div>
+          </div>
+
+          <div className="flex items-start space-x-4">
+            <div className="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center">
+              3
+            </div>
+            <div>
+              <h3 className="font-semibold mb-1">Review qualified candidates</h3>
+              <p className="text-gray-600">
+                Only receive submissions from tenants who meet your requirements
+              </p>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
+  );
+};
+
+// Main LandlordFlow component
 const LandlordFlow = () => {
   const [step, setStep] = useState(1);
   const [formData, setFormData] = useState({
@@ -23,42 +295,20 @@ const LandlordFlow = () => {
       cleanRentalHistory: true,
     }
   });
-  const { user, registerMutation } = useAuth();
-  const { toast } = useToast();
 
-  const registerForm = useForm({
-    defaultValues: {
-      username: "",
-      password: "",
-      confirmPassword: "",
-      type: "landlord",
-      name: "",
-      email: "",
-      phone: "",
-    },
-    resolver: zodResolver(
-      insertUserSchema.extend({
-        confirmPassword: insertUserSchema.shape.password,
-      }).refine((data) => data.password === data.confirmPassword, {
-        message: "Passwords don't match",
-        path: ["confirmPassword"],
-      })
-    ),
-  });
-
-  const handleInputChange = (e) => {
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       [name]: value
     }));
   };
 
-  const handleRequirementsChange = (e) => {
+  const handleRequirementsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     const fieldName = name.replace('requirements.', '');
 
-    setFormData((prev) => ({
+    setFormData(prev => ({
       ...prev,
       requirements: {
         ...prev.requirements,
@@ -67,28 +317,9 @@ const LandlordFlow = () => {
     }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setStep(3);
-  };
-
-  const handleRegister = async (data) => {
-    try {
-      await registerMutation.mutateAsync({
-        ...data,
-        type: "landlord",
-      });
-      toast({
-        title: "Account created successfully",
-        description: "You can now manage your properties and view applications",
-      });
-    } catch (error) {
-      toast({
-        title: "Error creating account",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
   };
 
   const LandingPage = () => (
@@ -139,12 +370,12 @@ const LandlordFlow = () => {
       </div>
 
       <div className="text-center">
-        <button
+        <Button
           onClick={() => setStep(2)}
           className="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
         >
           Create Pre-Screening Page
-        </button>
+        </Button>
       </div>
     </div>
   );
@@ -262,250 +493,22 @@ const LandlordFlow = () => {
         </Card>
 
         <div className="text-center">
-          <button
+          <Button
             type="submit"
             className="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
           >
             Create Pre-Screening Page <ArrowRight className="inline ml-2" />
-          </button>
+          </Button>
         </div>
       </form>
     </div>
   );
 
-  const SuccessPage = () => {
-    const [showAccountForm, setShowAccountForm] = useState(false);
-    const screeningLink = `https://myrentcard.com/apply/${Math.random().toString(36).substr(2, 9)}`;
-
-    return (
-      <div className="max-w-2xl mx-auto px-4 py-12">
-        <div className="text-center mb-8">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ClipboardCheck className="w-8 h-8 text-green-600" />
-          </div>
-          <h2 className="text-3xl font-bold mb-4">Your Pre-Screening Page is Ready!</h2>
-          <p className="text-gray-600 mb-4">
-            Share this link with potential tenants to receive instant RentCard submissions
-          </p>
-          <div className="inline-block bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
-            <p className="text-sm text-blue-800">
-              ✨ Recommended: Create a free account to manage submissions and update your screening page
-            </p>
-          </div>
-        </div>
-
-        {user ? (
-          <Card className="p-6 border-2 border-blue-100">
-            <CardHeader>
-              <CardTitle>Account Connected</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-green-600 text-center mb-4">Your account is already connected!</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="p-6 border-2 border-blue-100">
-            <CardHeader>
-              <CardTitle>Create Your Free Account</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-gray-600">With a free account you can:</p>
-                <ul className="space-y-2">
-                  <li className="flex items-center">
-                    <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
-                    View and manage tenant submissions
-                  </li>
-                  <li className="flex items-center">
-                    <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
-                    Update your screening requirements anytime
-                  </li>
-                  <li className="flex items-center">
-                    <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
-                    Save your page for future properties
-                  </li>
-                  <li className="flex items-center">
-                    <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
-                    Access basic analytics and insights
-                  </li>
-                </ul>
-                <div className="pt-4">
-                  <Button 
-                    onClick={() => setShowAccountForm(!showAccountForm)}
-                    className="w-full"
-                  >
-                    Create Free Account
-                  </Button>
-                  <p className="text-sm text-center mt-2 text-gray-500">
-                    Optional premium features available for power users
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {showAccountForm && !user && (
-          <Card className="p-6 mt-6">
-            <CardHeader>
-              <CardTitle>Account Details</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <Form {...registerForm}>
-                <form onSubmit={registerForm.handleSubmit(handleRegister)} className="space-y-4">
-                  <FormField
-                    control={registerForm.control}
-                    name="username"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Username</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={registerForm.control}
-                    name="password"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={registerForm.control}
-                    name="confirmPassword"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Confirm Password</FormLabel>
-                        <FormControl>
-                          <Input type="password" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={registerForm.control}
-                    name="name"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Full Name</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={registerForm.control}
-                    name="email"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Email</FormLabel>
-                        <FormControl>
-                          <Input type="email" {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <FormField
-                    control={registerForm.control}
-                    name="phone"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Phone (Optional)</FormLabel>
-                        <FormControl>
-                          <Input {...field} />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                  <Button 
-                    type="submit"
-                    className="w-full"
-                    disabled={registerMutation.isPending}
-                  >
-                    {registerMutation.isPending ? "Creating Account..." : "Complete Account Setup"}
-                  </Button>
-                </form>
-              </Form>
-            </CardContent>
-          </Card>
-        )}
-
-        <Card className="p-6 mt-8">
-          <CardContent>
-            <div className="bg-gray-50 p-4 rounded-lg break-all text-center">
-              <p className="font-mono text-gray-800">{screeningLink}</p>
-            </div>
-            <Button className="w-full mt-4">
-              Copy Link
-            </Button>
-          </CardContent>
-        </Card>
-
-        <Card className="p-6 mt-8">
-          <CardHeader>
-            <CardTitle>How it works</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex items-start space-x-4">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center">
-                1
-              </div>
-              <div>
-                <h3 className="font-semibold mb-1">Share your link</h3>
-                <p className="text-gray-600">
-                  Add this link to your property listings or share directly with interested tenants
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-4">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center">
-                2
-              </div>
-              <div>
-                <h3 className="font-semibold mb-1">Tenants submit instantly</h3>
-                <p className="text-gray-600">
-                  Interested tenants can submit their complete RentCard profile with one click
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-start space-x-4">
-              <div className="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center">
-                3
-              </div>
-              <div>
-                <h3 className="font-semibold mb-1">Review qualified candidates</h3>
-                <p className="text-gray-600">
-                  Only receive submissions from tenants who meet your requirements
-                </p>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  };
-
   return (
     <div className="min-h-screen bg-gray-50">
       {step === 1 && <LandingPage />}
       {step === 2 && <RequirementsForm />}
-      {step === 3 && <SuccessPage />}
+      {step === 3 && <SuccessPage formData={formData} />}
     </div>
   );
 };
