@@ -53,24 +53,28 @@ const LandlordDashboard = () => {
       if (selectedImage) {
         const formData = new FormData();
         formData.append('image', selectedImage);
-        const uploadResponse = await fetch('/api/upload', {
-          method: 'POST',
-          body: formData,
-        });
-        if (!uploadResponse.ok) {
+        try {
+          const response = await fetch('/api/upload', {
+            method: 'POST',
+            body: formData,
+          });
+          if (!response.ok) {
+            throw new Error('Failed to upload image');
+          }
+          const data = await response.json();
+          imageUrl = data.url;
+        } catch (error) {
+          console.error('Image upload error:', error);
           throw new Error('Failed to upload image');
         }
-        const { url } = await uploadResponse.json();
-        imageUrl = url;
       }
 
-      return apiRequest('/api/properties', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ ...propertyData, imageUrl })
+      // Then create the property with the image URL
+      const response = await apiRequest('POST', '/api/properties', { 
+        ...propertyData, 
+        imageUrl 
       });
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
@@ -128,6 +132,7 @@ const LandlordDashboard = () => {
       requirements: newProperty.requirements,
       status: 'Available' as const,
       available: true,
+      landlordId: 1, // This should come from the authenticated user
     };
 
     try {
