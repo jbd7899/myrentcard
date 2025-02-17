@@ -52,14 +52,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                     </Button>
                   </>
                 ) : (
-                  <>
-                    <Link href="/auth" className="cta-button">
-                      Create Your Free RentCard
-                    </Link>
-                    <Link href="/auth" className="cta-button-secondary">
-                      For Landlords
-                    </Link>
-                  </>
+                  <Link href="/auth" className="cta-button">
+                    Login / Register
+                  </Link>
                 )}
               </div>
             </div>
