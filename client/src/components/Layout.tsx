@@ -2,8 +2,9 @@ import { Building2 } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
+import { ReactNode } from 'react';
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+export default function Layout({ children }: { children: ReactNode }) {
   const [location] = useLocation();
   const { user, logoutMutation } = useAuth();
 
@@ -20,7 +21,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </span>
             </Link>
 
-            {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-8">
               <nav className="flex space-x-8">
                 <Link href="#how-it-works">
@@ -53,7 +53,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                   </>
                 ) : (
                   <Link href="/auth">
-                    <Button variant="default" className="bg-primary text-white">
+                    <Button className="bg-[#4361ee] hover:bg-[#3a0ca3] text-white">
                       Login
                     </Button>
                   </Link>
@@ -61,7 +61,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            {/* Mobile menu button */}
             <div className="md:hidden">
               <button className="menu-toggle">
                 <span></span>

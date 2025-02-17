@@ -38,7 +38,7 @@ export default function AuthPage() {
     defaultValues: {
       username: "",
       password: "",
-      type: "tenant",
+      type: "tenant" as const,
       name: "",
       email: "",
       phone: "",
@@ -46,7 +46,8 @@ export default function AuthPage() {
   });
 
   if (user) {
-    return <Redirect to="/" />;
+    // Redirect based on user type
+    return <Redirect to={user.type === 'tenant' ? '/tenant' : '/landlord'} />;
   }
 
   return (
