@@ -9,6 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { z } from "zod";
 
 // Success page component
 const SuccessPage = ({ formData }: { formData: any }) => {
@@ -283,22 +284,244 @@ const SuccessPage = ({ formData }: { formData: any }) => {
   );
 };
 
+// Form schema for the requirements form
+const requirementsFormSchema = z.object({
+  businessName: z.string().min(1, "Business name is required"),
+  managerName: z.string().min(1, "Contact name is required"),
+  businessEmail: z.string().email("Invalid email address"),
+  requirements: z.object({
+    minCreditScore: z.string(),
+    minIncome: z.string(),
+    noEvictions: z.boolean(),
+    cleanRentalHistory: z.boolean(),
+  }),
+});
+
+type RequirementsFormData = z.infer<typeof requirementsFormSchema>;
+
+// Requirements form component
+const RequirementsForm = ({ onSubmit }: { onSubmit: (data: RequirementsFormData) => void }) => {
+  const form = useForm<RequirementsFormData>({
+    defaultValues: {
+      businessName: '',
+      managerName: '',
+      businessEmail: '',
+      requirements: {
+        minCreditScore: '',
+        minIncome: '',
+        noEvictions: true,
+        cleanRentalHistory: true,
+      },
+    },
+    resolver: zodResolver(requirementsFormSchema),
+  });
+
+  return (
+    <div className="max-w-2xl mx-auto px-4 py-12">
+      <h2 className="text-3xl font-bold text-center mb-8">
+        Customize Your Pre-Screening Requirements
+      </h2>
+
+      <Form {...form}>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <Card className="p-6">
+            <CardHeader>
+              <CardTitle>Business Information</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <FormField
+                control={form.control}
+                name="businessName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Business/Property Management Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="managerName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contact Name</FormLabel>
+                    <FormControl>
+                      <Input {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="businessEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Business Email</FormLabel>
+                    <FormControl>
+                      <Input type="email" {...field} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="p-6">
+            <CardHeader>
+              <CardTitle>Tenant Requirements</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <FormField
+                  control={form.control}
+                  name="requirements.minCreditScore"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Minimum Credit Score</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 650" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="requirements.minIncome"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Minimum Monthly Income</FormLabel>
+                      <FormControl>
+                        <Input type="number" placeholder="e.g., 3000" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <FormField
+                  control={form.control}
+                  name="requirements.noEvictions"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-2">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={field.onChange}
+                          className="rounded"
+                        />
+                      </FormControl>
+                      <FormLabel>No prior evictions</FormLabel>
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="requirements.cleanRentalHistory"
+                  render={({ field }) => (
+                    <FormItem className="flex items-center space-x-2">
+                      <FormControl>
+                        <input
+                          type="checkbox"
+                          checked={field.value}
+                          onChange={field.onChange}
+                          className="rounded"
+                        />
+                      </FormControl>
+                      <FormLabel>Clean rental payment history</FormLabel>
+                    </FormItem>
+                  )}
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="text-center">
+            <Button
+              type="submit"
+              className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-lg text-lg font-semibold"
+              size="lg"
+            >
+              Create Pre-Screening Page <ArrowRight className="inline ml-2" />
+            </Button>
+          </div>
+        </form>
+      </Form>
+    </div>
+  );
+};
+
+// Landing page component
+const LandingPage = ({ onProceed }: { onProceed: () => void }) => (
+  <div className="max-w-6xl mx-auto px-4 py-12">
+    <h1 className="text-4xl font-bold text-center mb-4">
+      Pre-Screen Tenants Instantly
+    </h1>
+    <p className="text-xl text-center text-gray-600 mb-4">
+      Create your custom pre-screening page and receive qualified RentCard profiles from interested tenants
+    </p>
+    <p className="text-center text-blue-600 font-semibold mb-12">
+      Core features are free • Optional premium features available
+    </p>
+
+    <div className="grid md:grid-cols-3 gap-8 mb-12">
+      <Card className="p-6">
+        <CardHeader>
+          <Clock className="w-12 h-12 text-blue-600 mb-4" />
+          <CardTitle>Save Time</CardTitle>
+        </CardHeader>
+        <CardContent>
+          Only meet with pre-qualified tenants who match your requirements. 
+          No more wasted showings or lengthy phone screenings.
+        </CardContent>
+      </Card>
+
+      <Card className="p-6">
+        <CardHeader>
+          <Shield className="w-12 h-12 text-blue-600 mb-4" />
+          <CardTitle>Verified Profiles</CardTitle>
+        </CardHeader>
+        <CardContent>
+          Receive complete RentCard profiles with verified rental history, 
+          income, and references. Tenants with RentCard accounts can submit with just one click.
+        </CardContent>
+      </Card>
+
+      <Card className="p-6">
+        <CardHeader>
+          <Building2 className="w-12 h-12 text-blue-600 mb-4" />
+          <CardTitle>Multiple Properties</CardTitle>
+        </CardHeader>
+        <CardContent>
+          Show interested tenants your other available properties that match their needs. 
+          Convert more leads and fill vacancies faster with cross-property recommendations.
+        </CardContent>
+      </Card>
+    </div>
+
+    <div className="text-center">
+      <Button
+        onClick={onProceed}
+        className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-lg text-lg font-semibold"
+        size="lg"
+      >
+        Create Pre-Screening Page
+      </Button>
+    </div>
+  </div>
+);
+
 // Main LandlordFlow component
 const LandlordFlow = () => {
   const [step, setStep] = useState(1);
-  interface FormData {
-    businessName: string;
-    managerName: string;
-    businessEmail: string;
-    requirements: {
-      minCreditScore: string;
-      minIncome: string;
-      noEvictions: boolean;
-      cleanRentalHistory: boolean;
-    }
-  }
-
-  const [formData, setFormData] = useState<FormData>({
+  const [formData, setFormData] = useState<RequirementsFormData>({
     businessName: '',
     managerName: '',
     businessEmail: '',
@@ -307,223 +530,18 @@ const LandlordFlow = () => {
       minIncome: '',
       noEvictions: true,
       cleanRentalHistory: true,
-    }
+    },
   });
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value
-    }));
-  };
-
-  const handleRequirementsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    const fieldName = name.replace('requirements.', '');
-
-    setFormData((prev) => ({
-      ...prev,
-      requirements: {
-        ...prev.requirements,
-        [fieldName]: type === 'checkbox' ? checked : value
-      }
-    }));
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFormSubmit = (data: RequirementsFormData) => {
+    setFormData(data);
     setStep(3);
   };
 
-  const LandingPage = () => (
-    <div className="max-w-6xl mx-auto px-4 py-12">
-      <h1 className="text-4xl font-bold text-center mb-4">
-        Pre-Screen Tenants Instantly
-      </h1>
-      <p className="text-xl text-center text-gray-600 mb-4">
-        Create your custom pre-screening page and receive qualified RentCard profiles from interested tenants
-      </p>
-      <p className="text-center text-blue-600 font-semibold mb-12">
-        Core features are free • Optional premium features available
-      </p>
-
-      <div className="grid md:grid-cols-3 gap-8 mb-12">
-        <Card className="p-6">
-          <CardHeader>
-            <Clock className="w-12 h-12 text-blue-600 mb-4" />
-            <CardTitle>Save Time</CardTitle>
-          </CardHeader>
-          <CardContent>
-            Only meet with pre-qualified tenants who match your requirements. 
-            No more wasted showings or lengthy phone screenings.
-          </CardContent>
-        </Card>
-
-        <Card className="p-6">
-          <CardHeader>
-            <Shield className="w-12 h-12 text-blue-600 mb-4" />
-            <CardTitle>Verified Profiles</CardTitle>
-          </CardHeader>
-          <CardContent>
-            Receive complete RentCard profiles with verified rental history, 
-            income, and references. Tenants with RentCard accounts can submit with just one click.
-          </CardContent>
-        </Card>
-
-        <Card className="p-6">
-          <CardHeader>
-            <Building2 className="w-12 h-12 text-blue-600 mb-4" />
-            <CardTitle>Multiple Properties</CardTitle>
-          </CardHeader>
-          <CardContent>
-            Show interested tenants your other available properties that match their needs. 
-            Convert more leads and fill vacancies faster with cross-property recommendations.
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="text-center">
-        <Button
-          onClick={() => setStep(2)}
-          className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-lg text-lg font-semibold"
-          size="lg"
-        >
-          Create Pre-Screening Page
-        </Button>
-      </div>
-    </div>
-  );
-
-  const RequirementsForm = () => (
-    <div className="max-w-2xl mx-auto px-4 py-12">
-      <h2 className="text-3xl font-bold text-center mb-8">
-        Customize Your Pre-Screening Requirements
-      </h2>
-
-      <form onSubmit={handleSubmit} className="space-y-6">
-        <Card className="p-6">
-          <CardHeader>
-            <CardTitle>Business Information</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Business/Property Management Name
-              </label>
-              <Input
-                type="text"
-                name="businessName"
-                value={formData.businessName}
-                onChange={handleInputChange}
-                className="w-full"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Contact Name
-              </label>
-              <Input
-                type="text"
-                name="managerName"
-                value={formData.managerName}
-                onChange={handleInputChange}
-                className="w-full"
-                required
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium mb-1">
-                Business Email
-              </label>
-              <Input
-                type="email"
-                name="businessEmail"
-                value={formData.businessEmail}
-                onChange={handleInputChange}
-                className="w-full"
-                required
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="p-6">
-          <CardHeader>
-            <CardTitle>Tenant Requirements</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Minimum Credit Score
-                </label>
-                <input
-                  type="number"
-                  name="requirements.minCreditScore"
-                  value={formData.requirements.minCreditScore}
-                  onChange={handleRequirementsChange}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="e.g., 650"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium mb-1">
-                  Minimum Monthly Income
-                </label>
-                <input
-                  type="number"
-                  name="requirements.minIncome"
-                  value={formData.requirements.minIncome}
-                  onChange={handleRequirementsChange}
-                  className="w-full p-2 border rounded-lg"
-                  placeholder="e.g., 3000"
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <label className="flex items-center space-x-2">
-                <input 
-                  type="checkbox"
-                  name="requirements.noEvictions"
-                  checked={formData.requirements.noEvictions}
-                  onChange={handleRequirementsChange}
-                  className="rounded"
-                />
-                <span>No prior evictions</span>
-              </label>
-              <label className="flex items-center space-x-2">
-                <input 
-                  type="checkbox"
-                  name="requirements.cleanRentalHistory"
-                  checked={formData.requirements.cleanRentalHistory}
-                  onChange={handleRequirementsChange}
-                  className="rounded"
-                />
-                <span>Clean rental payment history</span>
-              </label>
-            </div>
-          </CardContent>
-        </Card>
-
-        <div className="text-center">
-          <Button
-            type="submit"
-            className="bg-blue-600 hover:bg-blue-700 text-white px-8 py-6 rounded-lg text-lg font-semibold"
-            size="lg"
-          >
-            Create Pre-Screening Page <ArrowRight className="inline ml-2" />
-          </Button>
-        </div>
-      </form>
-    </div>
-  );
-
   return (
     <div className="min-h-screen bg-gray-50">
-      {step === 1 && <LandingPage />}
-      {step === 2 && <RequirementsForm />}
+      {step === 1 && <LandingPage onProceed={() => setStep(2)} />}
+      {step === 2 && <RequirementsForm onSubmit={handleFormSubmit} />}
       {step === 3 && <SuccessPage formData={formData} />}
     </div>
   );
