@@ -14,7 +14,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
-import { Building2, Users, DollarSign, TrendingUp } from 'lucide-react';
+import { Building2, Users, TrendingUp, Eye } from 'lucide-react';
 import type { Property, Application } from '@shared/schema';
 
 interface PropertyAnalyticsProps {
@@ -29,13 +29,25 @@ export const PropertyAnalytics: React.FC<PropertyAnalyticsProps> = ({
   applications
 }) => {
   // Calculate key metrics
+  const totalPageViews = properties.reduce((acc, p) => acc + (p.pageViews || 0), 0);
+  const totalSubmissions = properties.reduce((acc, p) => acc + (p.submissionCount || 0), 0);
+  const averageConversionRate = totalPageViews ? (totalSubmissions / totalPageViews) * 100 : 0;
+
+  // Property performance data
+  const propertyPerformance = properties.map(property => ({
+    name: property.title,
+    pageViews: property.pageViews || 0,
+    submissions: property.submissionCount || 0,
+    conversionRate: property.pageViews ? ((property.submissionCount || 0) / property.pageViews) * 100 : 0
+  }));
+
+  // Calculate key metrics (from original code, modified)
   const totalProperties = properties.length;
   const occupiedProperties = properties.filter(p => p.status === 'Rented').length;
   const occupancyRate = totalProperties ? (occupiedProperties / totalProperties) * 100 : 0;
   const totalApplications = applications.length;
   const averageApplicationsPerProperty = totalProperties ? totalApplications / totalProperties : 0;
-  
-  // Monthly revenue data (sample calculation)
+
   const monthlyRevenue = properties.reduce((acc, property) => acc + (property.status === 'Rented' ? property.rent : 0), 0);
 
   const statusData = [
@@ -56,42 +68,30 @@ export const PropertyAnalytics: React.FC<PropertyAnalyticsProps> = ({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      {/* High-level metrics */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Properties</CardTitle>
-            <Building2 className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Page Views</CardTitle>
+            <Eye className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalProperties}</div>
+            <div className="text-2xl font-bold">{totalPageViews.toLocaleString()}</div>
             <p className="text-xs text-muted-foreground">
-              Occupancy Rate: {occupancyRate.toFixed(1)}%
+              Across all property pages
             </p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Applications</CardTitle>
+            <CardTitle className="text-sm font-medium">Total Submissions</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{totalApplications}</div>
+            <div className="text-2xl font-bold">{totalSubmissions}</div>
             <p className="text-xs text-muted-foreground">
-              {averageApplicationsPerProperty.toFixed(1)} per property
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Monthly Revenue</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${monthlyRevenue.toLocaleString()}</div>
-            <p className="text-xs text-muted-foreground">
-              From {occupiedProperties} rented properties
+              RentCard applications received
             </p>
           </CardContent>
         </Card>
@@ -102,16 +102,66 @@ export const PropertyAnalytics: React.FC<PropertyAnalyticsProps> = ({
             <TrendingUp className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {totalApplications ? ((occupiedProperties / totalApplications) * 100).toFixed(1) : 0}%
-            </div>
+            <div className="text-2xl font-bold">{averageConversionRate.toFixed(1)}%</div>
             <p className="text-xs text-muted-foreground">
-              Applications to tenants
+              Views to submissions
             </p>
           </CardContent>
         </Card>
       </div>
 
+      {/* Property Performance Chart */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Property Performance</CardTitle>
+        </CardHeader>
+        <CardContent className="h-[400px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={propertyPerformance}>
+              <CartesianGrid strokeDasharray="3 3" />
+              <XAxis dataKey="name" />
+              <YAxis yAxisId="left" orientation="left" stroke="#8884d8" />
+              <YAxis yAxisId="right" orientation="right" stroke="#82ca9d" />
+              <Tooltip />
+              <Bar yAxisId="left" dataKey="pageViews" name="Page Views" fill="#8884d8" />
+              <Bar yAxisId="right" dataKey="submissions" name="Submissions" fill="#82ca9d" />
+            </BarChart>
+          </ResponsiveContainer>
+        </CardContent>
+      </Card>
+
+      {/* Individual Property Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+        {properties.map((property) => (
+          <Card key={property.id}>
+            <CardHeader>
+              <CardTitle className="text-lg">{property.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Page Views</span>
+                  <span>{property.pageViews || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Submissions</span>
+                  <span>{property.submissionCount || 0}</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Conversion Rate</span>
+                  <span>
+                    {property.pageViews 
+                      ? (((property.submissionCount || 0) / property.pageViews) * 100).toFixed(1)
+                      : 0}%
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Original charts and cards remain mostly unchanged */}
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="col-span-1">
           <CardHeader>

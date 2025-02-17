@@ -5,6 +5,7 @@ import { storage } from "./storage";
 import { insertPropertySchema, insertApplicationSchema, insertUserSchema } from "@shared/schema";
 import { scrypt, randomBytes } from "crypto";
 import { promisify } from "util";
+import { sql } from "drizzle-orm";
 
 const scryptAsync = promisify(scrypt);
 
@@ -57,6 +58,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(201).json(property);
   });
 
+  // Track property page view
+  app.post("/api/properties/:id/view", async (req, res) => {
+    const propertyId = parseInt(req.params.id);
+    await storage.incrementPropertyViews(propertyId);
+    res.sendStatus(200);
+  });
+
   // Application routes
   app.get("/api/applications", async (req, res) => {
     if (!req.isAuthenticated()) {
@@ -90,6 +98,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       tenantId: req.user.id,
       status: "pending",
     });
+
+    // Increment submission count for the property
+    await storage.incrementPropertySubmissions(validation.data.propertyId);
+
     res.status(201).json(application);
   });
 

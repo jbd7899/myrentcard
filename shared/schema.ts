@@ -25,6 +25,9 @@ export const properties = pgTable("properties", {
   requirements: jsonb("requirements").notNull(),
   status: text("status", { enum: ["Available", "Rented", "Pending"] }).notNull().default("Available"),
   available: boolean("available").default(true),
+  pageViews: integer("page_views").default(0),
+  uniqueVisitors: integer("unique_visitors").default(0),
+  submissionCount: integer("submission_count").default(0),
   createdAt: timestamp("created_at").defaultNow(),
 });
 
@@ -49,6 +52,9 @@ export const insertUserSchema = createInsertSchema(users).omit({
 export const insertPropertySchema = createInsertSchema(properties).omit({
   id: true,
   createdAt: true,
+  pageViews: true,
+  uniqueVisitors: true,
+  submissionCount: true,
 });
 
 export const insertApplicationSchema = createInsertSchema(applications).omit({

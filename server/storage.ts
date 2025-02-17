@@ -20,6 +20,8 @@ export interface IStorage {
   createProperty(property: Omit<Property, "id" | "createdAt">): Promise<Property>;
   getAllProperties(): Promise<Property[]>;
   getPropertyById(id: number): Promise<Property | undefined>;
+  incrementPropertyViews(id: number): Promise<void>;
+  incrementPropertySubmissions(id: number): Promise<void>;
 
   // Application operations
   createApplication(application: Omit<Application, "id" | "createdAt">): Promise<Application>;
@@ -63,6 +65,18 @@ export class DatabaseStorage implements IStorage {
   async getPropertyById(id: number): Promise<Property | undefined> {
     const [property] = await db.select().from(properties).where(eq(properties.id, id));
     return property;
+  }
+
+  async incrementPropertyViews(id: number): Promise<void> {
+    await db.execute(
+      sql`UPDATE properties SET page_views = page_views + 1 WHERE id = ${id}`
+    );
+  }
+
+  async incrementPropertySubmissions(id: number): Promise<void> {
+    await db.execute(
+      sql`UPDATE properties SET submission_count = submission_count + 1 WHERE id = ${id}`
+    );
   }
 
   async createApplication(insertApplication: Omit<Application, "id" | "createdAt">): Promise<Application> {
