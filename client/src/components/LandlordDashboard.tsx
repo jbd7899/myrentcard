@@ -11,10 +11,13 @@ import PropertyAnalytics from './PropertyAnalytics';
 interface NewPropertyFormData {
   title: string;
   description: string;
+  imageUrl: string;
   rent: string;
   address: string;
   bedrooms: string;
   bathrooms: string;
+  units: string;
+  parkingSpaces: string;
   requirements: PropertyRequirements;
 }
 
@@ -25,10 +28,13 @@ const LandlordDashboard = () => {
   const [newProperty, setNewProperty] = useState<NewPropertyFormData>({
     title: '',
     description: '',
+    imageUrl: '',
     rent: '',
     address: '',
     bedrooms: '',
     bathrooms: '',
+    units: '',
+    parkingSpaces: '',
     requirements: {
       minCreditScore: 650,
       minIncome: 3000,
@@ -46,7 +52,7 @@ const LandlordDashboard = () => {
   });
 
   const createPropertyMutation = useMutation({
-    mutationFn: (propertyData: Omit<Property, 'id' | 'createdAt' | 'pageViews' | 'uniqueVisitors' | 'submissionCount'>) => 
+    mutationFn: (propertyData: Omit<Property, 'id' | 'createdAt' | 'pageViews' | 'uniqueVisitors' | 'submissionCount'>) =>
       apiRequest('/api/properties', {
         method: 'POST',
         headers: {
@@ -64,10 +70,13 @@ const LandlordDashboard = () => {
       setNewProperty({
         title: '',
         description: '',
+        imageUrl: '',
         rent: '',
         address: '',
         bedrooms: '',
         bathrooms: '',
+        units: '',
+        parkingSpaces: '',
         requirements: {
           minCreditScore: 650,
           minIncome: 3000,
@@ -98,10 +107,13 @@ const LandlordDashboard = () => {
     const propertyData = {
       title: newProperty.title,
       description: newProperty.description,
+      imageUrl: newProperty.imageUrl || null,
       rent: parseInt(newProperty.rent),
       address: newProperty.address,
       bedrooms: parseInt(newProperty.bedrooms),
       bathrooms: parseInt(newProperty.bathrooms),
+      units: parseInt(newProperty.units),
+      parkingSpaces: parseInt(newProperty.parkingSpaces),
       requirements: newProperty.requirements,
       status: 'Available' as const,
       available: true,
@@ -122,7 +134,7 @@ const LandlordDashboard = () => {
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Property Dashboard</h2>
-        <Button 
+        <Button
           onClick={() => setShowAddProperty(true)}
           className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white"
           size="lg"
@@ -134,9 +146,9 @@ const LandlordDashboard = () => {
 
       {/* Analytics Section */}
       {properties && applications && (
-        <PropertyAnalytics 
-          properties={properties} 
-          applications={applications} 
+        <PropertyAnalytics
+          properties={properties}
+          applications={applications}
         />
       )}
 
@@ -160,6 +172,17 @@ const LandlordDashboard = () => {
                 />
               </div>
               <div>
+                <label className="block text-sm font-medium mb-1">Image URL</label>
+                <input
+                  type="url"
+                  name="imageUrl"
+                  value={newProperty.imageUrl}
+                  onChange={handleInputChange}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="https://example.com/image.jpg"
+                />
+              </div>
+              <div>
                 <label className="block text-sm font-medium mb-1">Description</label>
                 <textarea
                   name="description"
@@ -172,6 +195,32 @@ const LandlordDashboard = () => {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div>
+                  <label className="block text-sm font-medium mb-1">Number of Units</label>
+                  <input
+                    type="number"
+                    name="units"
+                    value={newProperty.units}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded-lg"
+                    required
+                    min="1"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">Parking Spaces</label>
+                  <input
+                    type="number"
+                    name="parkingSpaces"
+                    value={newProperty.parkingSpaces}
+                    onChange={handleInputChange}
+                    className="w-full p-2 border rounded-lg"
+                    required
+                    min="0"
+                  />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
                   <label className="block text-sm font-medium mb-1">Monthly Rent</label>
                   <input
                     type="number"
@@ -180,6 +229,7 @@ const LandlordDashboard = () => {
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded-lg"
                     required
+                    min="0"
                   />
                 </div>
                 <div>
@@ -204,6 +254,7 @@ const LandlordDashboard = () => {
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded-lg"
                     required
+                    min="0"
                   />
                 </div>
                 <div>
@@ -215,19 +266,21 @@ const LandlordDashboard = () => {
                     onChange={handleInputChange}
                     className="w-full p-2 border rounded-lg"
                     required
+                    min="0"
                   />
                 </div>
               </div>
               <div className="flex justify-end space-x-2">
-                <Button 
-                  type="button" 
+                <Button
+                  type="button"
                   variant="outline"
                   onClick={() => setShowAddProperty(false)}
                 >
                   Cancel
                 </Button>
-                <Button 
+                <Button
                   type="submit"
+                  className="bg-blue-600 hover:bg-blue-700 text-white"
                   disabled={createPropertyMutation.isPending}
                 >
                   {createPropertyMutation.isPending ? "Adding..." : "Add Property"}
@@ -246,12 +299,29 @@ const LandlordDashboard = () => {
               <CardTitle className="text-lg">{property.title}</CardTitle>
             </CardHeader>
             <CardContent>
+              {property.imageUrl && (
+                <div className="mb-4">
+                  <img
+                    src={property.imageUrl}
+                    alt={property.title}
+                    className="w-full h-48 object-cover rounded-lg"
+                  />
+                </div>
+              )}
               <div className="space-y-4">
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Status</span>
                   <span className={property.status === "Available" ? "text-green-600" : "text-blue-600"}>
                     {property.status}
                   </span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Units</span>
+                  <span>{property.units} units</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-gray-500">Parking</span>
+                  <span>{property.parkingSpaces} spaces</span>
                 </div>
                 <div className="flex justify-between text-sm">
                   <span className="text-gray-500">Rent</span>
