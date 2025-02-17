@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { ArrowRight, Clock, Shield, Building2, ClipboardCheck } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '@/hooks/use-auth';
 
 const LandlordFlow = () => {
   const [step, setStep] = useState(1);
@@ -16,7 +15,6 @@ const LandlordFlow = () => {
       cleanRentalHistory: true,
     }
   });
-  const { user } = useAuth();
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -29,7 +27,7 @@ const LandlordFlow = () => {
   const handleRequirementsChange = (e) => {
     const { name, value, type, checked } = e.target;
     const fieldName = name.replace('requirements.', '');
-
+    
     setFormData((prev) => ({
       ...prev,
       requirements: {
@@ -55,7 +53,7 @@ const LandlordFlow = () => {
       <p className="text-center text-blue-600 font-semibold mb-12">
         Core features are free • Optional premium features available
       </p>
-
+      
       <div className="grid md:grid-cols-3 gap-8 mb-12">
         <Card className="p-6">
           <CardHeader>
@@ -247,58 +245,47 @@ const LandlordFlow = () => {
           </div>
         </div>
 
-        {user ? (
-          <Card className="p-6 border-2 border-blue-100">
-            <CardHeader>
-              <CardTitle>Account Connected</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-green-600 text-center mb-4">Your account is already connected!</p>
-            </CardContent>
-          </Card>
-        ) : (
-          <Card className="p-6 border-2 border-blue-100">
-            <CardHeader>
-              <CardTitle>Create Your Free Account</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                <p className="text-gray-600">With a free account you can:</p>
-                <ul className="space-y-2">
-                  <li className="flex items-center">
-                    <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
-                    View and manage tenant submissions
-                  </li>
-                  <li className="flex items-center">
-                    <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
-                    Update your screening requirements anytime
-                  </li>
-                  <li className="flex items-center">
-                    <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
-                    Save your page for future properties
-                  </li>
-                  <li className="flex items-center">
-                    <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
-                    Access basic analytics and insights
-                  </li>
-                </ul>
-                <div className="pt-4">
-                  <button 
-                    onClick={() => setShowAccountForm(!showAccountForm)}
-                    className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Create Free Account
-                  </button>
-                  <p className="text-sm text-center mt-2 text-gray-500">
-                    Optional premium features available for power users
-                  </p>
-                </div>
+        <Card className="p-6 border-2 border-blue-100">
+          <CardHeader>
+            <CardTitle>Create Your Free Account</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-gray-600">With a free account you can:</p>
+              <ul className="space-y-2">
+                <li className="flex items-center">
+                  <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
+                  View and manage tenant submissions
+                </li>
+                <li className="flex items-center">
+                  <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
+                  Update your screening requirements anytime
+                </li>
+                <li className="flex items-center">
+                  <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
+                  Save your page for future properties
+                </li>
+                <li className="flex items-center">
+                  <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
+                  Access basic analytics and insights
+                </li>
+              </ul>
+              <div className="pt-4">
+                <button 
+                  onClick={() => setShowAccountForm(!showAccountForm)}
+                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Create Free Account
+                </button>
+                <p className="text-sm text-center mt-2 text-gray-500">
+                  Optional premium features available for power users
+                </p>
               </div>
-            </CardContent>
-          </Card>
-        )}
+            </div>
+          </CardContent>
+        </Card>
 
-        {showAccountForm && !user && (
+        {showAccountForm && (
           <Card className="p-6 mt-6">
             <CardHeader>
               <CardTitle>Account Details</CardTitle>
