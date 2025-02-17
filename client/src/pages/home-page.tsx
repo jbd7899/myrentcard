@@ -1,4 +1,4 @@
-import { Building2, Shield, Calendar, Users } from "lucide-react";
+import { Building2, Shield, Calendar, Users, Key } from "lucide-react";
 import { Link } from "wouter";
 
 export default function HomePage() {
@@ -116,6 +116,101 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* Testimonials Section */}
+      <section id="testimonials" className="testimonials">
+        <div className="container">
+          <div className="section-title">
+            <h2>Trusted by Renters & Landlords Nationwide</h2>
+            <p>Join thousands of satisfied users who have simplified their rental process</p>
+          </div>
+          <div className="testimonial-grid">
+            <div className="testimonial-card">
+              <div className="testimonial-text">
+                "MyRentCard made finding an apartment so much easier! I saved hours of time not having to fill out the same information over and over. Got approved for my dream apartment in just 2 days!"
+              </div>
+              <div className="testimonial-author">
+                <div className="author-info">
+                  <h4>Alex R.</h4>
+                  <p>Renter in Seattle</p>
+                </div>
+              </div>
+            </div>
+            <div className="testimonial-card">
+              <div className="testimonial-text">
+                "As a property manager, MyRentCard has streamlined our entire screening process. We get complete, verified tenant information instantly, saving countless hours on paperwork."
+              </div>
+              <div className="testimonial-author">
+                <div className="author-info">
+                  <h4>Sarah M.</h4>
+                  <p>Property Manager</p>
+                </div>
+              </div>
+            </div>
+            <div className="testimonial-card">
+              <div className="testimonial-text">
+                "The verified rental history feature is a game-changer. I was able to demonstrate my perfect payment record to my new landlord, making approval a breeze."
+              </div>
+              <div className="testimonial-author">
+                <div className="author-info">
+                  <h4>James L.</h4>
+                  <p>Recent Mover</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section */}
+      <section className="cta-section">
+        <div className="container">
+          <div className="cta-content">
+            <h2>Ready to Simplify Renting?</h2>
+            <p>Join thousands of happy renters and landlords who have made the smart switch to MyRentCard. Get started for free - no credit card required.</p>
+            <div className="cta-buttons">
+              <Link href="/auth" className="cta-button-light">Create Your Free RentCard</Link>
+              <Link href="/auth" className="cta-button-outline">Request Tenant Info</Link>
+            </div>
+            <div className="trust-badge">
+              <Shield className="w-5 h-5" />
+              <span>Your information is safe & secure</span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer>
+        <div className="container">
+          <div className="footer-grid">
+            <div className="footer-about">
+              <Link href="/" className="footer-logo">MyRentCard</Link>
+              <p>Making the rental process easier for tenants and landlords. Apply once, rent anywhere.</p>
+            </div>
+            <div className="footer-links">
+              <h4>Product</h4>
+              <ul>
+                <li><Link href="#">For Tenants</Link></li>
+                <li><Link href="#">For Landlords</Link></li>
+                <li><Link href="#">Pricing</Link></li>
+                <li><Link href="#">Features</Link></li>
+              </ul>
+            </div>
+            <div className="footer-links">
+              <h4>Support</h4>
+              <ul>
+                <li><Link href="#">Privacy Policy</Link></li>
+                <li><Link href="#">Terms of Service</Link></li>
+                <li><Link href="#">Contact Us</Link></li>
+              </ul>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            <p>&copy; 2025 MyRentCard. All rights reserved.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
