@@ -1,0 +1,199 @@
+import React, { useState } from 'react';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Clock, Mail, Phone, Edit2, Share2, Eye, ExternalLink } from 'lucide-react';
+
+const TenantAccount = () => {
+  const [activeTab, setActiveTab] = useState('profile');
+  
+  // Sample data - would come from backend in real implementation
+  const accountInfo = {
+    name: "Alex Thompson",
+    email: "alex@example.com",
+    phone: "(555) 123-4567",
+    city: "Seattle, WA",
+    lastUpdated: "2025-02-15",
+    loginMethod: "Google"
+  };
+
+  const sharedLinks = [
+    {
+      recipient: "Parkview Apartments",
+      url: "myrentcard.com/share/abc123",
+      lastViewed: "2025-02-16 14:30",
+      dateShared: "2025-02-15"
+    },
+    {
+      recipient: "Urban Living Properties",
+      url: "myrentcard.com/share/def456",
+      lastViewed: null,
+      dateShared: "2025-02-14"
+    }
+  ];
+
+  const sampleMessage = `Hi, I'm ${accountInfo.name} and I'm interested in your property. I've shared my RentCard with you which includes my complete rental application and history. You can view it at the link below.`;
+
+  return (
+    <div className="max-w-6xl mx-auto p-6 space-y-6">
+      {/* Navigation Tabs */}
+      <div className="flex space-x-4 border-b">
+        <button
+          className={'pb-2 px-4 ' + (activeTab === 'profile' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600')}
+          onClick={() => setActiveTab('profile')}
+        >
+          Profile
+        </button>
+        <button
+          className={'pb-2 px-4 ' + (activeTab === 'sharing' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600')}
+          onClick={() => setActiveTab('sharing')}
+        >
+          Sharing History
+        </button>
+        <button
+          className={'pb-2 px-4 ' + (activeTab === 'references' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600')}
+          onClick={() => setActiveTab('references')}
+        >
+          References
+        </button>
+      </div>
+
+      {/* Profile Section */}
+      {activeTab === 'profile' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Account Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Name</label>
+                <Input value={accountInfo.name} className="mt-1" disabled />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Email</label>
+                <Input value={accountInfo.email} className="mt-1" disabled />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Phone</label>
+                <Input value={accountInfo.phone} className="mt-1" disabled />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700">Current City</label>
+                <Input value={accountInfo.city} className="mt-1" disabled />
+              </div>
+            </div>
+            
+            <div className="bg-blue-50 p-4 rounded-lg flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <Clock className="w-5 h-5 text-blue-500" />
+                <span>RentCard last updated: {accountInfo.lastUpdated}</span>
+              </div>
+              <Button variant="outline" className="flex items-center space-x-2">
+                <Edit2 className="w-4 h-4" />
+                <span>Review & Edit</span>
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Sharing History Section */}
+      {activeTab === 'sharing' && (
+        <div className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>Share Your RentCard</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="bg-gray-50 p-4 rounded-lg">
+                <h3 className="font-medium mb-2">Sample Message</h3>
+                <p className="text-gray-600 mb-4">{sampleMessage}</p>
+                <div className="flex space-x-4">
+                  <Button className="flex items-center space-x-2">
+                    <Mail className="w-4 h-4" />
+                    <span>Share via Email</span>
+                  </Button>
+                  <Button variant="outline" className="flex items-center space-x-2">
+                    <Phone className="w-4 h-4" />
+                    <span>Share via SMS</span>
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Sharing History</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="overflow-x-auto">
+                <table className="w-full">
+                  <thead>
+                    <tr className="border-b">
+                      <th className="px-4 py-2 text-left">Recipient</th>
+                      <th className="px-4 py-2 text-left">Date Shared</th>
+                      <th className="px-4 py-2 text-left">Last Viewed</th>
+                      <th className="px-4 py-2 text-left">Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {sharedLinks.map((link, index) => (
+                      <tr key={index} className="border-b">
+                        <td className="px-4 py-3">{link.recipient}</td>
+                        <td className="px-4 py-3">{link.dateShared}</td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center space-x-2">
+                            <Eye className="w-4 h-4 text-gray-400" />
+                            <span>{link.lastViewed || 'Not viewed yet'}</span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex space-x-2">
+                            <Button variant="outline" size="sm">
+                              <Mail className="w-4 h-4" />
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Phone className="w-4 h-4" />
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <ExternalLink className="w-4 h-4" />
+                            </Button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* References Section */}
+      {activeTab === 'references' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Rental References</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <Button className="flex items-center space-x-2">
+                <Share2 className="w-4 h-4" />
+                <span>Request New Reference</span>
+              </Button>
+              
+              <div className="bg-gray-50 p-4 rounded-lg text-center">
+                <p className="text-gray-600">No references collected yet. Share the reference request form with your previous landlords to start building your rental history.</p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+    </div>
+  );
+};
+
+export default TenantAccount;

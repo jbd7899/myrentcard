@@ -1,0 +1,392 @@
+import React, { useState } from 'react';
+import { ArrowRight, Clock, Shield, Building2, ClipboardCheck } from 'lucide-react';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+
+const LandlordFlow = () => {
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({
+    businessName: '',
+    managerName: '',
+    businessEmail: '',
+    requirements: {
+      minCreditScore: '',
+      minIncome: '',
+      noEvictions: true,
+      cleanRentalHistory: true,
+    }
+  });
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value
+    }));
+  };
+
+  const handleRequirementsChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    const fieldName = name.replace('requirements.', '');
+    
+    setFormData((prev) => ({
+      ...prev,
+      requirements: {
+        ...prev.requirements,
+        [fieldName]: type === 'checkbox' ? checked : value
+      }
+    }));
+  };
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setStep(3);
+  };
+
+  const LandingPage = () => (
+    <div className="max-w-6xl mx-auto px-4 py-12">
+      <h1 className="text-4xl font-bold text-center mb-4">
+        Pre-Screen Tenants Instantly
+      </h1>
+      <p className="text-xl text-center text-gray-600 mb-4">
+        Create your custom pre-screening page and receive qualified RentCard profiles from interested tenants
+      </p>
+      <p className="text-center text-blue-600 font-semibold mb-12">
+        Core features are free • Optional premium features available
+      </p>
+      
+      <div className="grid md:grid-cols-3 gap-8 mb-12">
+        <Card className="p-6">
+          <CardHeader>
+            <Clock className="w-12 h-12 text-blue-600 mb-4" />
+            <CardTitle>Save Time</CardTitle>
+          </CardHeader>
+          <CardContent>
+            Only meet with pre-qualified tenants who match your requirements. 
+            No more wasted showings or lengthy phone screenings.
+          </CardContent>
+        </Card>
+
+        <Card className="p-6">
+          <CardHeader>
+            <Shield className="w-12 h-12 text-blue-600 mb-4" />
+            <CardTitle>Verified Profiles</CardTitle>
+          </CardHeader>
+          <CardContent>
+            Receive complete RentCard profiles with verified rental history, 
+            income, and references. Tenants with RentCard accounts can submit with just one click.
+          </CardContent>
+        </Card>
+
+        <Card className="p-6">
+          <CardHeader>
+            <Building2 className="w-12 h-12 text-blue-600 mb-4" />
+            <CardTitle>Multiple Properties</CardTitle>
+          </CardHeader>
+          <CardContent>
+            Show interested tenants your other available properties that match their needs. 
+            Convert more leads and fill vacancies faster with cross-property recommendations.
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="text-center">
+        <button
+          onClick={() => setStep(2)}
+          className="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
+        >
+          Create Pre-Screening Page
+        </button>
+      </div>
+    </div>
+  );
+
+  const RequirementsForm = () => (
+    <div className="max-w-2xl mx-auto px-4 py-12">
+      <h2 className="text-3xl font-bold text-center mb-8">
+        Customize Your Pre-Screening Requirements
+      </h2>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <Card className="p-6">
+          <CardHeader>
+            <CardTitle>Business Information</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Business/Property Management Name
+              </label>
+              <input
+                type="text"
+                name="businessName"
+                value={formData.businessName}
+                onChange={handleInputChange}
+                className="w-full p-2 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Contact Name
+              </label>
+              <input
+                type="text"
+                name="managerName"
+                value={formData.managerName}
+                onChange={handleInputChange}
+                className="w-full p-2 border rounded-lg"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium mb-1">
+                Business Email
+              </label>
+              <input
+                type="email"
+                name="businessEmail"
+                value={formData.businessEmail}
+                onChange={handleInputChange}
+                className="w-full p-2 border rounded-lg"
+                required
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card className="p-6">
+          <CardHeader>
+            <CardTitle>Tenant Requirements</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Minimum Credit Score
+                </label>
+                <input
+                  type="number"
+                  name="requirements.minCreditScore"
+                  value={formData.requirements.minCreditScore}
+                  onChange={handleRequirementsChange}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="e.g., 650"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">
+                  Minimum Monthly Income
+                </label>
+                <input
+                  type="number"
+                  name="requirements.minIncome"
+                  value={formData.requirements.minIncome}
+                  onChange={handleRequirementsChange}
+                  className="w-full p-2 border rounded-lg"
+                  placeholder="e.g., 3000"
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <label className="flex items-center space-x-2">
+                <input 
+                  type="checkbox"
+                  name="requirements.noEvictions"
+                  checked={formData.requirements.noEvictions}
+                  onChange={handleRequirementsChange}
+                  className="rounded"
+                />
+                <span>No prior evictions</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input 
+                  type="checkbox"
+                  name="requirements.cleanRentalHistory"
+                  checked={formData.requirements.cleanRentalHistory}
+                  onChange={handleRequirementsChange}
+                  className="rounded"
+                />
+                <span>Clean rental payment history</span>
+              </label>
+            </div>
+          </CardContent>
+        </Card>
+
+        <div className="text-center">
+          <button
+            type="submit"
+            className="bg-blue-600 text-white px-8 py-3 rounded-lg text-lg font-semibold hover:bg-blue-700 transition-colors"
+          >
+            Create Pre-Screening Page <ArrowRight className="inline ml-2" />
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+
+  const SuccessPage = () => {
+    const [showAccountForm, setShowAccountForm] = useState(false);
+    const screeningLink = `https://myrentcard.com/apply/${Math.random().toString(36).substr(2, 9)}`;
+
+    return (
+      <div className="max-w-2xl mx-auto px-4 py-12">
+        <div className="text-center mb-8">
+          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ClipboardCheck className="w-8 h-8 text-green-600" />
+          </div>
+          <h2 className="text-3xl font-bold mb-4">Your Pre-Screening Page is Ready!</h2>
+          <p className="text-gray-600 mb-4">
+            Share this link with potential tenants to receive instant RentCard submissions
+          </p>
+          <div className="inline-block bg-blue-50 border border-blue-200 rounded-lg px-4 py-2">
+            <p className="text-sm text-blue-800">
+              ✨ Recommended: Create a free account to manage submissions and update your screening page
+            </p>
+          </div>
+        </div>
+
+        <Card className="p-6 border-2 border-blue-100">
+          <CardHeader>
+            <CardTitle>Create Your Free Account</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-gray-600">With a free account you can:</p>
+              <ul className="space-y-2">
+                <li className="flex items-center">
+                  <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
+                  View and manage tenant submissions
+                </li>
+                <li className="flex items-center">
+                  <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
+                  Update your screening requirements anytime
+                </li>
+                <li className="flex items-center">
+                  <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
+                  Save your page for future properties
+                </li>
+                <li className="flex items-center">
+                  <span className="bg-blue-100 rounded-full p-1 mr-2">✓</span>
+                  Access basic analytics and insights
+                </li>
+              </ul>
+              <div className="pt-4">
+                <button 
+                  onClick={() => setShowAccountForm(!showAccountForm)}
+                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Create Free Account
+                </button>
+                <p className="text-sm text-center mt-2 text-gray-500">
+                  Optional premium features available for power users
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {showAccountForm && (
+          <Card className="p-6 mt-6">
+            <CardHeader>
+              <CardTitle>Account Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <form className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Password
+                  </label>
+                  <input
+                    type="password"
+                    className="w-full p-2 border rounded-lg"
+                    required
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-1">
+                    Confirm Password
+                  </label>
+                  <input
+                    type="password"
+                    className="w-full p-2 border rounded-lg"
+                    required
+                  />
+                </div>
+                <button 
+                  type="submit"
+                  className="w-full bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Complete Account Setup
+                </button>
+              </form>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className="p-6 mt-8">
+          <CardContent>
+            <div className="bg-gray-50 p-4 rounded-lg break-all text-center">
+              <p className="font-mono text-gray-800">{screeningLink}</p>
+            </div>
+            <button className="w-full mt-4 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+              Copy Link
+            </button>
+          </CardContent>
+        </Card>
+
+        <Card className="p-6 mt-8">
+          <CardHeader>
+            <CardTitle>How it works</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-start space-x-4">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center">
+                1
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Share your link</h3>
+                <p className="text-gray-600">
+                  Add this link to your property listings or share directly with interested tenants
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-4">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center">
+                2
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Tenants submit instantly</h3>
+                <p className="text-gray-600">
+                  Interested tenants can submit their complete RentCard profile with one click
+                </p>
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-4">
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex-shrink-0 flex items-center justify-center">
+                3
+              </div>
+              <div>
+                <h3 className="font-semibold mb-1">Review qualified candidates</h3>
+                <p className="text-gray-600">
+                  Only receive submissions from tenants who meet your requirements
+                </p>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {step === 1 && <LandingPage />}
+      {step === 2 && <RequirementsForm />}
+      {step === 3 && <SuccessPage />}
+    </div>
+  );
+};
+
+export default LandlordFlow;

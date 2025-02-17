@@ -1,0 +1,199 @@
+import React, { useState } from 'react';
+import { Building2, Shield, Calendar, Users, PawPrint, Car, Briefcase, HelpCircle, ArrowRight } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+
+const HorizonSubmissionPage = () => {
+  const [loading, setLoading] = useState(false);
+  const [showBasicForm, setShowBasicForm] = useState(false);
+  
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    setLoading(true);
+    // Simulate submission
+    setTimeout(() => setLoading(false), 1500);
+  };
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Demo Banner */}
+      <div className="bg-blue-600 text-white text-center py-2 px-4">
+        <p className="text-sm font-medium">Demo Version - This is a sample pre-screening page</p>
+      </div>
+
+      {/* Header */}
+      <header className="bg-white border-b">
+        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <div className="flex items-center space-x-2">
+            <Building2 className="h-8 w-8 text-blue-600" />
+            <div>
+              <h1 className="text-xl font-semibold">Horizon Property Management</h1>
+              <p className="text-sm text-gray-600">Powered by MyRentCard</p>
+            </div>
+          </div>
+          <Shield className="h-6 w-6 text-blue-600" />
+        </div>
+      </header>
+
+      {/* Main Content */}
+      <main className="container mx-auto px-4 py-8 max-w-4xl">
+        <Card className="mb-8">
+          <CardHeader>
+            <CardTitle>Property Pre-Screening</CardTitle>
+            <CardDescription>
+              Complete your initial pre-screening to express interest in this property
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-8">
+              {/* MyRentCard Option */}
+              <div className="bg-blue-50 p-6 rounded-lg">
+                <h3 className="text-lg font-medium mb-2">Option 1: Quick Pre-Screening with MyRentCard</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Share your verified profile instantly to start the pre-screening process
+                </p>
+                <div className="space-y-4">
+                  <button 
+                    className={`w-full bg-blue-600 text-white py-3 px-4 rounded-lg flex items-center justify-center space-x-2 hover:bg-blue-700 transition-colors ${loading ? 'opacity-75 cursor-not-allowed' : ''}`}
+                    onClick={handleSubmit}
+                    disabled={loading}
+                  >
+                    {loading ? (
+                      <div className="w-6 h-6 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    ) : (
+                      <>
+                        <span>Share MyRentCard Profile</span>
+                        <ArrowRight className="w-5 h-5" />
+                      </>
+                    )}
+                  </button>
+                  <div className="text-center">
+                    <span className="text-sm text-gray-600">Don't have a MyRentCard?</span>
+                    <button className="text-sm text-blue-600 hover:underline ml-2">
+                      Create one now
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Basic Pre-screening Form Option */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-medium mb-2">Option 2: Basic Pre-screening Form</h3>
+                <p className="text-sm text-gray-600 mb-4">
+                  Submit preliminary information about your tenancy requirements
+                </p>
+                <button 
+                  className="text-blue-600 hover:underline flex items-center"
+                  onClick={() => setShowBasicForm(!showBasicForm)}
+                >
+                  <span>{showBasicForm ? 'Hide' : 'Show'} Pre-screening Form</span>
+                  <ArrowRight className={`w-4 h-4 ml-1 transform transition-transform ${showBasicForm ? 'rotate-90' : ''}`} />
+                </button>
+              </div>
+
+              {/* Basic Pre-screening Form */}
+              {showBasicForm && (
+                <form className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium">
+                        <Calendar className="w-4 h-4 mr-2" />
+                        Desired Move-in Date
+                      </label>
+                      <input type="date" className="w-full p-2 border rounded-lg" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium">
+                        <Users className="w-4 h-4 mr-2" />
+                        Number of Intended Occupants
+                      </label>
+                      <input type="number" className="w-full p-2 border rounded-lg" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium">
+                        <PawPrint className="w-4 h-4 mr-2" />
+                        Pets (if any)
+                      </label>
+                      <input type="text" className="w-full p-2 border rounded-lg" placeholder="Type and number of pets" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium">
+                        <Car className="w-4 h-4 mr-2" />
+                        Parking Requirements
+                      </label>
+                      <input type="text" className="w-full p-2 border rounded-lg" placeholder="Number and type of vehicles" />
+                    </div>
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium">
+                        <Briefcase className="w-4 h-4 mr-2" />
+                        Employment Status
+                      </label>
+                      <select className="w-full p-2 border rounded-lg">
+                        <option value="">Select status</option>
+                        <option>Full-time employed</option>
+                        <option>Part-time employed</option>
+                        <option>Self-employed</option>
+                        <option>Student</option>
+                        <option>Retired</option>
+                        <option>Other</option>
+                      </select>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="flex items-center text-sm font-medium">
+                        <HelpCircle className="w-4 h-4 mr-2" />
+                        Intended Length of Stay
+                      </label>
+                      <select className="w-full p-2 border rounded-lg">
+                        <option value="">Select duration</option>
+                        <option>6 months</option>
+                        <option>1 year</option>
+                        <option>2+ years</option>
+                        <option>Unsure</option>
+                      </select>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="flex items-center text-sm font-medium">
+                      Additional Information or Questions
+                    </label>
+                    <textarea 
+                      className="w-full p-2 border rounded-lg" 
+                      rows="3"
+                      placeholder="Any specific requirements or questions about the property?"
+                    ></textarea>
+                  </div>
+                  <button 
+                    type="submit"
+                    className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+                  >
+                    Submit Pre-screening Information
+                  </button>
+                </form>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Trust Elements */}
+        <div className="space-y-4">
+          <Alert>
+            <Shield className="w-4 h-4 mr-2" />
+            <AlertDescription>
+              Your information is secure and will only be shared with Horizon Property Management
+            </AlertDescription>
+          </Alert>
+          <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
+            <Shield className="w-5 h-5 text-blue-600" />
+            <span>MyRentCard Verified</span>
+            <span>•</span>
+            <span>256-bit SSL Encryption</span>
+            <span>•</span>
+            <span>Privacy Protected</span>
+          </div>
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default HorizonSubmissionPage;
