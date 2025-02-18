@@ -24,16 +24,17 @@ export function setupAuth(app: Express) {
 
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'development-secret',
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Changed to true to ensure session is saved back to store
+    saveUninitialized: true, // Changed to true to ensure session is always created
     store: storage.sessionStore,
     name: 'rentcard.sid', // Custom cookie name
     cookie: {
       httpOnly: true,
-      secure: !isDevelopment, // Only use secure in production
-      sameSite: isDevelopment ? 'lax' : 'strict',
-      maxAge: 24 * 60 * 60 * 1000 // 24 hours
-    }
+      secure: false, // Set to false in both dev and prod for Replit
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+    },
+    rolling: true // Extends the session expiry on each request
   };
 
   // Debug session configuration
@@ -46,6 +47,18 @@ export function setupAuth(app: Express) {
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // Add session debug middleware
+  app.use((req, res, next) => {
+    const oldEnd = res.end;
+    // @ts-ignore
+    res.end = function (...args) {
+      console.log('[Auth Debug] Response Headers:', res.getHeaders());
+      // @ts-ignore
+      oldEnd.apply(res, args);
+    };
+    next();
+  });
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {
@@ -95,18 +108,6 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // Add authentication debugging middleware
-  app.use((req, res, next) => {
-    console.log(`[Auth Debug] ${req.method} ${req.path}`);
-    console.log(`[Auth Debug] Session ID: ${req.sessionID}`);
-    console.log(`[Auth Debug] isAuthenticated: ${req.isAuthenticated()}`);
-    console.log(`[Auth Debug] Session:`, req.session);
-    if (req.user) {
-      console.log(`[Auth Debug] User: ${JSON.stringify(req.user)}`);
-    }
-    next();
-  });
-
   // Auth routes with improved error handling and logging
   app.post("/api/register", async (req, res, next) => {
     try {
@@ -142,10 +143,11 @@ export function setupAuth(app: Express) {
 
   app.post("/api/login", (req, res, next) => {
     console.log('[Auth Debug] Login attempt:', { username: req.body.username });
+    console.log('[Auth Debug] Session before login:', req.session);
 
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
-        console.error("Login error:", err);
+        console.error("[Auth Debug] Login error:", err);
         return next(err);
       }
       if (!user) {
@@ -154,10 +156,12 @@ export function setupAuth(app: Express) {
       }
       req.login(user, (err) => {
         if (err) {
-          console.error("Session creation error:", err);
+          console.error("[Auth Debug] Session creation error:", err);
           return next(err);
         }
-        console.log("Login successful for user:", user.id);
+        console.log("[Auth Debug] Login successful for user:", user.id);
+        console.log('[Auth Debug] Session after login:', req.session);
+
         // Set a custom header to indicate successful authentication
         res.setHeader('X-Authentication-Status', 'success');
         res.status(200).json(user);
@@ -166,10 +170,14 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/logout", (req, res, next) => {
-    console.log("Logging out user:", req.user?.id);
+    console.log("[Auth Debug] Logging out user:", req.user?.id);
     req.logout((err) => {
       if (err) return next(err);
-      res.sendStatus(200);
+      req.session.destroy((err) => {
+        if (err) return next(err);
+        res.clearCookie('rentcard.sid');
+        res.sendStatus(200);
+      });
     });
   });
 
@@ -177,12 +185,13 @@ export function setupAuth(app: Express) {
     console.log('[Auth Debug] User check request');
     console.log('[Auth Debug] Session:', req.session);
     console.log('[Auth Debug] isAuthenticated:', req.isAuthenticated());
+    console.log('[Auth Debug] Cookie:', req.headers.cookie);
 
     if (!req.isAuthenticated()) {
-      console.log("Unauthenticated user access attempt");
+      console.log("[Auth Debug] Unauthenticated user access attempt");
       return res.sendStatus(401);
     }
-    console.log("Authenticated user access:", req.user?.id);
+    console.log("[Auth Debug] Authenticated user access:", req.user?.id);
     res.json(req.user);
   });
 }
