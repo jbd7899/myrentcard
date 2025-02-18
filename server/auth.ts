@@ -30,13 +30,13 @@ export function setupAuth(app: Express) {
     saveUninitialized: false,
     store: storage.sessionStore,
     name: 'rentcard.sid',
-    proxy: true, // Trust the reverse proxy
+    proxy: true,
     cookie: {
       httpOnly: true,
-      secure: 'auto', // Let Express determine based on connection
+      secure: true,
       sameSite: 'none',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      domain: process.env.NODE_ENV === 'production' ? '.myrentcard.com' : undefined
+      maxAge: 30 * 24 * 60 * 60 * 1000,
+      domain: undefined
     }
   };
 

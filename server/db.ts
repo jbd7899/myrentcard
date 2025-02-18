@@ -13,15 +13,32 @@ if (!process.env.DATABASE_URL) {
 
 console.log("[Database] Connecting to database...");
 
-export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+export const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  connectionTimeoutMillis: 5000,
+  max: 20,
+  idleTimeoutMillis: 30000,
+  retryInterval: 1000
+});
 export const db = drizzle(pool, { schema });
 
-// Test the connection
-pool.connect()
-  .then(() => {
-    console.log("[Database] Successfully connected to database");
-  })
-  .catch((err) => {
-    console.error("[Database] Failed to connect to database:", err);
-    process.exit(1);
-  });
+// Test the connection with retry logic
+const testConnection = async (retries = 5) => {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const client = await pool.connect();
+      client.release();
+      console.log("[Database] Successfully connected to database");
+      return;
+    } catch (err) {
+      console.error(`[Database] Connection attempt ${i + 1} failed:`, err);
+      if (i === retries - 1) throw err;
+      await new Promise(resolve => setTimeout(resolve, 2000));
+    }
+  }
+};
+
+testConnection().catch(err => {
+  console.error("[Database] All connection attempts failed:", err);
+  process.exit(1);
+});
