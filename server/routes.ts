@@ -42,29 +42,38 @@ const upload = multer({
 });
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Create test accounts if they don't exist
-  const testLandlord = await storage.getUserByUsername("testlandlord");
-  if (!testLandlord) {
-    await storage.createUser({
-      username: "testlandlord",
-      password: "testlandlord",
-      type: "landlord",
-      name: "Test Landlord",
-      email: "testlandlord@example.com",
-      phone: "1234567890"
-    });
-  }
+  try {
+    // Create test accounts if they don't exist
+    console.log("[Debug] Creating test accounts...");
+    const testLandlord = await storage.getUserByUsername("testlandlord");
+    if (!testLandlord) {
+      console.log("[Debug] Creating test landlord account...");
+      await storage.createUser({
+        username: "testlandlord",
+        password: await hashPassword("testlandlord"),
+        type: "landlord",
+        name: "Test Landlord",
+        email: "testlandlord@example.com",
+        phone: "1234567890"
+      });
+      console.log("[Debug] Test landlord account created successfully");
+    }
 
-  const testTenant = await storage.getUserByUsername("testtenant");
-  if (!testTenant) {
-    await storage.createUser({
-      username: "testtenant",
-      password: "testtenant",
-      type: "tenant",
-      name: "Test Tenant",
-      email: "testtenant@example.com",
-      phone: "0987654321"
-    });
+    const testTenant = await storage.getUserByUsername("testtenant");
+    if (!testTenant) {
+      console.log("[Debug] Creating test tenant account...");
+      await storage.createUser({
+        username: "testtenant",
+        password: await hashPassword("testtenant"),
+        type: "tenant",
+        name: "Test Tenant",
+        email: "testtenant@example.com",
+        phone: "0987654321"
+      });
+      console.log("[Debug] Test tenant account created successfully");
+    }
+  } catch (error) {
+    console.error("[Debug] Error creating test accounts:", error);
   }
 
   setupAuth(app);
