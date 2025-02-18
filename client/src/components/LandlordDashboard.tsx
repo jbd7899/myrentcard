@@ -116,11 +116,22 @@ const LandlordDashboard = () => {
     );
   }
 
-  // Error state
+  // Error state with retry button
   if (propertiesError || applicationsError || screeningPagesError) {
     return (
-      <div className="text-red-500 p-4">
-        Error loading dashboard data. Please try again later.
+      <div className="flex flex-col items-center justify-center p-8 space-y-4">
+        <div className="text-red-500">
+          Error loading dashboard data. You may need to log in again.
+        </div>
+        <Button 
+          onClick={() => {
+            queryClient.invalidateQueries({ queryKey: ['/api/properties'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
+            queryClient.invalidateQueries({ queryKey: ['/api/screening-pages'] });
+          }}
+        >
+          Retry
+        </Button>
       </div>
     );
   }
