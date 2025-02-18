@@ -11,5 +11,17 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
+console.log("[Database] Connecting to database...");
+
 export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
-export const db = drizzle({ client: pool, schema });
+export const db = drizzle(pool, { schema });
+
+// Test the connection
+pool.connect()
+  .then(() => {
+    console.log("[Database] Successfully connected to database");
+  })
+  .catch((err) => {
+    console.error("[Database] Failed to connect to database:", err);
+    process.exit(1);
+  });
