@@ -13,31 +13,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
     // Clear existing test accounts first
     await storage.clearTestAccounts();
 
-    // Create fresh test accounts
     console.log("[Debug] Creating test accounts...");
 
+    // Create test landlord
     const testLandlord = await storage.createUser({
-      username: "testlandlord",
-      password: "testlandlord",
+      username: "test1",
+      password: "test1",
       type: "landlord",
-      name: "Test Landlord",
-      email: "testlandlord@example.com",
+      name: "Test Landlord 1",
+      email: "test1@example.com",
       phone: "1234567890"
     });
     console.log("[Debug] Created test landlord:", testLandlord);
 
-    const testTenant = await storage.createUser({
-      username: "testtenant",
-      password: "testtenant",
-      type: "tenant",
-      name: "Test Tenant",
-      email: "testtenant@example.com",
-      phone: "0987654321"
+    // Create test properties
+    const property1 = await storage.createProperty({
+      title: "Luxury Downtown Apartment",
+      description: "Modern 2-bedroom apartment in the heart of downtown",
+      address: "123 Main St",
+      units: 4,
+      parkingSpaces: 2,
+      landlordId: testLandlord.id,
+      status: "Available",
+      available: true,
+      requirements: {
+        noEvictions: true,
+        cleanRentalHistory: true
+      }
     });
-    console.log("[Debug] Created test tenant:", testTenant);
+
+    const property2 = await storage.createProperty({
+      title: "Suburban Family Home",
+      description: "Spacious 3-bedroom house with garden",
+      address: "456 Oak Ave",
+      units: 1,
+      parkingSpaces: 2,
+      landlordId: testLandlord.id,
+      status: "Available",
+      available: true,
+      requirements: {
+        noEvictions: true,
+        cleanRentalHistory: true
+      }
+    });
+
+    // Create some test applications
+    const testApplications = [
+      {
+        propertyId: property1.id,
+        tenantId: 999, // Dummy tenant ID
+        status: "pending",
+        message: "Interested in moving in next month"
+      },
+      {
+        propertyId: property1.id,
+        tenantId: 998,
+        status: "pending",
+        message: "Looking for immediate move-in"
+      },
+      {
+        propertyId: property2.id,
+        tenantId: 997,
+        status: "pending",
+        message: "Family of four, excellent rental history"
+      }
+    ];
+
+    for (const app of testApplications) {
+      await storage.createApplication(app);
+    }
+
+    console.log("[Debug] Created test properties and applications");
 
   } catch (error) {
-    console.error("[Debug] Error creating test accounts:", error);
+    console.error("[Debug] Error creating test data:", error);
   }
 
   setupAuth(app);
