@@ -1,5 +1,5 @@
-import type { InsertUser, User, Property, Application, ApplicationStatus } from "@shared/schema";
-import { users, properties, applications } from "@shared/schema";
+import type { InsertUser, User, Property, Application, ApplicationStatus, ScreeningPage, ScreeningSubmission, InsertScreeningPage, InsertScreeningSubmission } from "@shared/schema";
+import { users, properties, applications, screeningPages, screeningSubmissions } from "@shared/schema";
 import { db } from "./db";
 import { eq, inArray, sql } from "drizzle-orm";
 import session from "express-session";
@@ -26,6 +26,16 @@ export interface IStorage {
   getTenantApplications(tenantId: number): Promise<Application[]>;
   getLandlordApplications(landlordId: number): Promise<Application[]>;
   bulkUpdateApplications(applicationIds: number[], status: ApplicationStatus): Promise<void>;
+  // Screening page operations
+  createScreeningPage(page: InsertScreeningPage): Promise<ScreeningPage>;
+  getScreeningPages(landlordId: number): Promise<ScreeningPage[]>;
+  getScreeningPageById(id: number): Promise<ScreeningPage | undefined>;
+  updateScreeningPage(id: number, updates: Partial<InsertScreeningPage>): Promise<ScreeningPage>;
+  incrementScreeningPageViews(id: number): Promise<void>;
+  // Screening submission operations
+  createScreeningSubmission(submission: InsertScreeningSubmission): Promise<ScreeningSubmission>;
+  getScreeningSubmissions(screeningPageId: number): Promise<ScreeningSubmission[]>;
+  updateScreeningSubmissionStatus(id: number, status: ApplicationStatus): Promise<void>;
   // Password operations
   hashPassword(password: string): Promise<string>;
   comparePasswords(supplied: string, stored: string): Promise<boolean>;
@@ -122,6 +132,71 @@ export class DatabaseStorage implements IStorage {
       .update(applications)
       .set({ status })
       .where(inArray(applications.id, applicationIds));
+  }
+
+  async createScreeningPage(page: InsertScreeningPage): Promise<ScreeningPage> {
+    const [screeningPage] = await db.insert(screeningPages).values(page).returning();
+    return screeningPage;
+  }
+
+  async getScreeningPages(landlordId: number): Promise<ScreeningPage[]> {
+    return await db
+      .select()
+      .from(screeningPages)
+      .where(eq(screeningPages.landlordId, landlordId));
+  }
+
+  async getScreeningPageById(id: number): Promise<ScreeningPage | undefined> {
+    const [page] = await db
+      .select()
+      .from(screeningPages)
+      .where(eq(screeningPages.id, id));
+    return page;
+  }
+
+  async updateScreeningPage(id: number, updates: Partial<InsertScreeningPage>): Promise<ScreeningPage> {
+    const [updated] = await db
+      .update(screeningPages)
+      .set({ ...updates, updatedAt: new Date() })
+      .where(eq(screeningPages.id, id))
+      .returning();
+    return updated;
+  }
+
+  async incrementScreeningPageViews(id: number): Promise<void> {
+    await db
+      .update(screeningPages)
+      .set({
+        views: sql`${screeningPages.views} + 1`,
+        uniqueVisitors: sql`${screeningPages.uniqueVisitors} + 1`
+      })
+      .where(eq(screeningPages.id, id));
+  }
+
+  async createScreeningSubmission(submission: InsertScreeningSubmission): Promise<ScreeningSubmission> {
+    const [screeningSubmission] = await db.insert(screeningSubmissions).values(submission).returning();
+
+    // Update submission count on the screening page
+    await db
+      .update(screeningPages)
+      .set({ submissionCount: sql`${screeningPages.submissionCount} + 1` })
+      .where(eq(screeningPages.id, submission.screeningPageId));
+
+    return screeningSubmission;
+  }
+
+  async getScreeningSubmissions(screeningPageId: number): Promise<ScreeningSubmission[]> {
+    return await db
+      .select()
+      .from(screeningSubmissions)
+      .where(eq(screeningSubmissions.screeningPageId, screeningPageId));
+  }
+
+  async updateScreeningSubmissionStatus(id: number, status: ApplicationStatus): Promise<void> {
+    await db
+      .update(screeningSubmissions)
+      .set({ status })
+      .where(eq(screeningSubmissions.id, id));
   }
 
   async hashPassword(password: string): Promise<string> {

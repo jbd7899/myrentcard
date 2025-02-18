@@ -1,13 +1,13 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link as LinkIcon, QrCode, Copy, Share2, Building2, PlusCircle, Edit } from 'lucide-react';
+import { Link as LinkIcon, QrCode, Copy, Share2, Building2, PlusCircle, Edit, ChartBar } from 'lucide-react';
 import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import BulkApplicationManager from './BulkApplicationManager';
-import type { Property, Application } from '@shared/schema';
+import type { Property, Application, ScreeningPage } from '@shared/schema';
 import { Loader2 } from 'lucide-react';
 
 const LandlordDashboard = () => {
@@ -21,11 +21,6 @@ const LandlordDashboard = () => {
     error: propertiesError 
   } = useQuery<Property[]>({
     queryKey: ['/api/properties'],
-    queryFn: async () => {
-      const res = await apiRequest('GET', '/api/properties');
-      return res.json();
-    },
-    retry: 3,
   });
 
   // Fetch applications with proper typing and error handling
@@ -35,11 +30,15 @@ const LandlordDashboard = () => {
     error: applicationsError 
   } = useQuery<Application[]>({
     queryKey: ['/api/applications'],
-    queryFn: async () => {
-      const res = await apiRequest('GET', '/api/applications');
-      return res.json();
-    },
-    retry: 3,
+  });
+
+  // Fetch screening pages
+  const {
+    data: screeningPages,
+    isLoading: screeningPagesLoading,
+    error: screeningPagesError
+  } = useQuery<ScreeningPage[]>({
+    queryKey: ['/api/screening-pages'],
   });
 
   const copyToClipboard = async (text: string) => {
@@ -59,52 +58,29 @@ const LandlordDashboard = () => {
   };
 
   const generateQRCode = (screeningPageId: string) => {
-    // TODO: Implement QR code generation
-    toast({
-      title: "QR Code",
-      description: "QR code generation will be implemented soon",
-    });
+    window.open(`/qr-code/${screeningPageId}`, '_blank');
   };
 
   const shareScreeningPage = (screeningPageId: string) => {
-    // TODO: Implement share functionality
-    toast({
-      title: "Share",
-      description: "Share functionality will be implemented soon",
-    });
+    if (navigator.share) {
+      navigator.share({
+        title: 'Rental Screening Page',
+        text: 'Check out this rental screening page',
+        url: `${window.location.origin}/screening/${screeningPageId}`,
+      }).catch(() => {
+        toast({
+          title: "Sharing failed",
+          description: "Could not share the screening page",
+          variant: "destructive",
+        });
+      });
+    } else {
+      copyToClipboard(`${window.location.origin}/screening/${screeningPageId}`);
+    }
   };
 
-  // Mutation for bulk updating applications
-  const updateApplicationsMutation = useMutation({
-    mutationFn: async ({ applicationIds, status }: { applicationIds: number[], status: 'approved' | 'rejected' }) => {
-      const response = await apiRequest('PATCH', '/api/applications/bulk', {
-        applicationIds,
-        status,
-      });
-      return response.json();
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
-      toast({
-        title: "Success",
-        description: "Applications updated successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: "Failed to update applications: " + error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  const handleUpdateApplications = async (applicationIds: number[], status: 'approved' | 'rejected') => {
-    await updateApplicationsMutation.mutateAsync({ applicationIds, status });
-  };
-
-
-  if (propertiesLoading || applicationsLoading) {
+  // Loading state
+  if (propertiesLoading || applicationsLoading || screeningPagesLoading) {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="w-8 h-8 animate-spin" />
@@ -112,7 +88,8 @@ const LandlordDashboard = () => {
     );
   }
 
-  if (propertiesError || applicationsError) {
+  // Error state
+  if (propertiesError || applicationsError || screeningPagesError) {
     return (
       <div className="text-red-500 p-4">
         Error loading dashboard data. Please try again later.
@@ -126,18 +103,31 @@ const LandlordDashboard = () => {
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-semibold">Screening Pages</h2>
+          <Link href="/create-screening">
+            <Button className="flex items-center space-x-2">
+              <PlusCircle className="w-4 h-4" />
+              <span>Create New Screening Page</span>
+            </Button>
+          </Link>
         </div>
 
         {/* General Screening Page */}
         <Card>
           <CardHeader>
-            <CardTitle>General Screening Page</CardTitle>
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle>General Screening Page</CardTitle>
+                <p className="text-sm text-gray-600 mt-1">
+                  Default screening page for all rental applications
+                </p>
+              </div>
+              <div className="bg-blue-100 px-3 py-1 rounded text-sm">
+                <span className="font-medium">{screeningPages?.find(p => p.type === 'general')?.views || 0}</span> views
+              </div>
+            </div>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <p className="text-sm text-gray-600">
-                Your default screening page for all rental applications
-              </p>
               <div className="flex space-x-2">
                 <Button variant="outline" onClick={() => copyToClipboard(`${window.location.origin}/screening/general`)}>
                   <Copy className="w-4 h-4 mr-2" />
@@ -157,34 +147,39 @@ const LandlordDashboard = () => {
                     Edit
                   </Button>
                 </Link>
+                <Link href="/analytics/general">
+                  <Button variant="outline">
+                    <ChartBar className="w-4 h-4 mr-2" />
+                    Analytics
+                  </Button>
+                </Link>
               </div>
             </div>
           </CardContent>
         </Card>
 
         {/* Property-Specific Screening Pages */}
-        <div className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="text-xl font-semibold">Property Screening Pages</h3>
-            <Link href="/create-screening">
-              <Button className="flex items-center space-x-2">
-                <PlusCircle className="w-4 h-4" />
-                <span>Create Property Screening</span>
-              </Button>
-            </Link>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2">
-            {properties?.map((property) => (
+        <div className="grid gap-4 md:grid-cols-2">
+          {properties?.map((property) => {
+            const screeningPage = screeningPages?.find(p => p.propertyId === property.id);
+            return (
               <Card key={property.id}>
                 <CardHeader>
-                  <CardTitle className="text-lg">{property.title}</CardTitle>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-lg">{property.title}</CardTitle>
+                      <p className="text-sm text-gray-600 mt-1">{property.address}</p>
+                    </div>
+                    <div className="bg-blue-100 px-3 py-1 rounded text-sm">
+                      <span className="font-medium">{screeningPage?.views || 0}</span> views
+                    </div>
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     <div className="text-sm text-gray-600">
-                      <p>{property.address}</p>
-                      <p className="mt-1">Status: {property.status}</p>
+                      <p>Status: {property.status}</p>
+                      <p>Applications: {screeningPage?.submissions?.length || 0}</p>
                     </div>
                     <div className="flex space-x-2">
                       <Button 
@@ -208,24 +203,27 @@ const LandlordDashboard = () => {
                           Edit
                         </Button>
                       </Link>
+                      <Link href={`/analytics/property/${property.id}`}>
+                        <Button variant="outline">
+                          <ChartBar className="w-4 h-4 mr-2" />
+                          Analytics
+                        </Button>
+                      </Link>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            ))}
-          </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Existing Properties Overview Section */}
+      {/* Properties Overview Section */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-semibold">Properties Overview</h2>
-          <Link href="/request-info">
-            <Button
-              className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white"
-              size="lg"
-            >
+          <Link href="/add-property">
+            <Button className="flex items-center space-x-2">
               <PlusCircle className="w-4 h-4" />
               <span>Add New Property</span>
             </Button>
@@ -240,7 +238,7 @@ const LandlordDashboard = () => {
               </CardHeader>
               <CardContent>
                 <p className="text-sm text-gray-600">{property.address}</p>
-                <div className="mt-4">
+                <div className="mt-4 space-y-2">
                   <p>Units: {property.units}</p>
                   <p>Status: {property.status}</p>
                   <p>Views: {property.pageViews}</p>

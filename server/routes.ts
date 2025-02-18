@@ -2,11 +2,11 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertPropertySchema, insertApplicationSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import express from 'express';
 import fs from 'fs';
+import { insertPropertySchema, insertApplicationSchema, insertScreeningPageSchema, insertScreeningSubmissionSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   try {
@@ -290,6 +290,180 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to update applications:", error);
       res.status(500).json({ message: "Failed to update applications" });
+    }
+  });
+
+  // Screening page routes
+  app.get("/api/screening-pages", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const pages = await storage.getScreeningPages(req.user.id);
+      res.json(pages);
+    } catch (error) {
+      console.error("Failed to fetch screening pages:", error);
+      res.status(500).json({ message: "Failed to fetch screening pages" });
+    }
+  });
+
+  app.post("/api/screening-pages", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user.type !== "landlord" && req.user.type !== "both")) {
+      return res.sendStatus(403);
+    }
+
+    const validation = insertScreeningPageSchema.safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json(validation.error);
+    }
+
+    try {
+      const screeningPage = await storage.createScreeningPage({
+        ...validation.data,
+        landlordId: req.user.id
+      });
+      res.status(201).json(screeningPage);
+    } catch (error) {
+      console.error("Failed to create screening page:", error);
+      res.status(500).json({ message: "Failed to create screening page" });
+    }
+  });
+
+  app.get("/api/screening-pages/:id", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (!id) {
+      return res.status(400).json({ message: "Invalid screening page ID" });
+    }
+
+    try {
+      const page = await storage.getScreeningPageById(id);
+      if (!page) {
+        return res.status(404).json({ message: "Screening page not found" });
+      }
+      res.json(page);
+    } catch (error) {
+      console.error("Failed to fetch screening page:", error);
+      res.status(500).json({ message: "Failed to fetch screening page" });
+    }
+  });
+
+  app.patch("/api/screening-pages/:id", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user.type !== "landlord" && req.user.type !== "both")) {
+      return res.sendStatus(403);
+    }
+
+    const id = parseInt(req.params.id);
+    if (!id) {
+      return res.status(400).json({ message: "Invalid screening page ID" });
+    }
+
+    const validation = insertScreeningPageSchema.partial().safeParse(req.body);
+    if (!validation.success) {
+      return res.status(400).json(validation.error);
+    }
+
+    try {
+      const page = await storage.getScreeningPageById(id);
+      if (!page || page.landlordId !== req.user.id) {
+        return res.status(404).json({ message: "Screening page not found" });
+      }
+
+      const updated = await storage.updateScreeningPage(id, validation.data);
+      res.json(updated);
+    } catch (error) {
+      console.error("Failed to update screening page:", error);
+      res.status(500).json({ message: "Failed to update screening page" });
+    }
+  });
+
+  app.post("/api/screening-pages/:id/view", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (!id) {
+      return res.status(400).json({ message: "Invalid screening page ID" });
+    }
+
+    try {
+      await storage.incrementScreeningPageViews(id);
+      res.sendStatus(200);
+    } catch (error) {
+      console.error("Failed to track page view:", error);
+      res.status(500).json({ message: "Failed to track page view" });
+    }
+  });
+
+  // Screening submission routes
+  app.post("/api/screening-pages/:id/submit", async (req, res) => {
+    const id = parseInt(req.params.id);
+    if (!id) {
+      return res.status(400).json({ message: "Invalid screening page ID" });
+    }
+
+    const validation = insertScreeningSubmissionSchema.safeParse({
+      ...req.body,
+      screeningPageId: id,
+      status: "pending",
+      tenantId: req.isAuthenticated() ? req.user.id : null
+    });
+
+    if (!validation.success) {
+      return res.status(400).json(validation.error);
+    }
+
+    try {
+      const submission = await storage.createScreeningSubmission(validation.data);
+      res.status(201).json(submission);
+    } catch (error) {
+      console.error("Failed to create submission:", error);
+      res.status(500).json({ message: "Failed to create submission" });
+    }
+  });
+
+  app.get("/api/screening-pages/:id/submissions", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user.type !== "landlord" && req.user.type !== "both")) {
+      return res.sendStatus(403);
+    }
+
+    const id = parseInt(req.params.id);
+    if (!id) {
+      return res.status(400).json({ message: "Invalid screening page ID" });
+    }
+
+    try {
+      const page = await storage.getScreeningPageById(id);
+      if (!page || page.landlordId !== req.user.id) {
+        return res.status(404).json({ message: "Screening page not found" });
+      }
+
+      const submissions = await storage.getScreeningSubmissions(id);
+      res.json(submissions);
+    } catch (error) {
+      console.error("Failed to fetch submissions:", error);
+      res.status(500).json({ message: "Failed to fetch submissions" });
+    }
+  });
+
+  app.patch("/api/screening-submissions/:id/status", async (req, res) => {
+    if (!req.isAuthenticated() || (req.user.type !== "landlord" && req.user.type !== "both")) {
+      return res.sendStatus(403);
+    }
+
+    const id = parseInt(req.params.id);
+    if (!id) {
+      return res.status(400).json({ message: "Invalid submission ID" });
+    }
+
+    const { status } = req.body;
+    if (!["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid status" });
+    }
+
+    try {
+      await storage.updateScreeningSubmissionStatus(id, status);
+      res.sendStatus(200);
+    } catch (error) {
+      console.error("Failed to update submission status:", error);
+      res.status(500).json({ message: "Failed to update submission status" });
     }
   });
 
