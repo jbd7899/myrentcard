@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link as LinkIcon } from 'lucide-react';
+import { Link as LinkIcon, QrCode, Copy, Share2, Building2, PlusCircle, Edit } from 'lucide-react';
 import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
@@ -42,6 +42,38 @@ const LandlordDashboard = () => {
     retry: 3,
   });
 
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast({
+        title: "Link copied",
+        description: "The screening page link has been copied to your clipboard",
+      });
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: "Failed to copy link to clipboard",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const generateQRCode = (screeningPageId: string) => {
+    // TODO: Implement QR code generation
+    toast({
+      title: "QR Code",
+      description: "QR code generation will be implemented soon",
+    });
+  };
+
+  const shareScreeningPage = (screeningPageId: string) => {
+    // TODO: Implement share functionality
+    toast({
+      title: "Share",
+      description: "Share functionality will be implemented soon",
+    });
+  };
+
   // Mutation for bulk updating applications
   const updateApplicationsMutation = useMutation({
     mutationFn: async ({ applicationIds, status }: { applicationIds: number[], status: 'approved' | 'rejected' }) => {
@@ -71,6 +103,7 @@ const LandlordDashboard = () => {
     await updateApplicationsMutation.mutateAsync({ applicationIds, status });
   };
 
+
   if (propertiesLoading || applicationsLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -89,39 +122,134 @@ const LandlordDashboard = () => {
 
   return (
     <div className="space-y-6 p-6">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-semibold">Property Dashboard</h2>
-        <div className="space-x-4">
+      {/* Screening Pages Section */}
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-semibold">Screening Pages</h2>
+        </div>
+
+        {/* General Screening Page */}
+        <Card>
+          <CardHeader>
+            <CardTitle>General Screening Page</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Your default screening page for all rental applications
+              </p>
+              <div className="flex space-x-2">
+                <Button variant="outline" onClick={() => copyToClipboard(`${window.location.origin}/screening/general`)}>
+                  <Copy className="w-4 h-4 mr-2" />
+                  Copy Link
+                </Button>
+                <Button variant="outline" onClick={() => generateQRCode('general')}>
+                  <QrCode className="w-4 h-4 mr-2" />
+                  QR Code
+                </Button>
+                <Button variant="outline" onClick={() => shareScreeningPage('general')}>
+                  <Share2 className="w-4 h-4 mr-2" />
+                  Share
+                </Button>
+                <Link href="/edit-screening/general">
+                  <Button variant="outline">
+                    <Edit className="w-4 h-4 mr-2" />
+                    Edit
+                  </Button>
+                </Link>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Property-Specific Screening Pages */}
+        <div className="space-y-4">
+          <div className="flex justify-between items-center">
+            <h3 className="text-xl font-semibold">Property Screening Pages</h3>
+            <Link href="/create-screening">
+              <Button className="flex items-center space-x-2">
+                <PlusCircle className="w-4 h-4" />
+                <span>Create Property Screening</span>
+              </Button>
+            </Link>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {properties?.map((property) => (
+              <Card key={property.id}>
+                <CardHeader>
+                  <CardTitle className="text-lg">{property.title}</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div className="text-sm text-gray-600">
+                      <p>{property.address}</p>
+                      <p className="mt-1">Status: {property.status}</p>
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button 
+                        variant="outline" 
+                        onClick={() => copyToClipboard(`${window.location.origin}/screening/property/${property.id}`)}
+                      >
+                        <Copy className="w-4 h-4 mr-2" />
+                        Copy Link
+                      </Button>
+                      <Button variant="outline" onClick={() => generateQRCode(`property-${property.id}`)}>
+                        <QrCode className="w-4 h-4 mr-2" />
+                        QR Code
+                      </Button>
+                      <Button variant="outline" onClick={() => shareScreeningPage(`property-${property.id}`)}>
+                        <Share2 className="w-4 h-4 mr-2" />
+                        Share
+                      </Button>
+                      <Link href={`/edit-screening/property/${property.id}`}>
+                        <Button variant="outline">
+                          <Edit className="w-4 h-4 mr-2" />
+                          Edit
+                        </Button>
+                      </Link>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* Existing Properties Overview Section */}
+      <div className="space-y-4">
+        <div className="flex justify-between items-center">
+          <h2 className="text-2xl font-semibold">Properties Overview</h2>
           <Link href="/request-info">
             <Button
               className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white"
               size="lg"
             >
-              <LinkIcon className="w-4 h-4" />
-              <span>Create Screening Page</span>
+              <PlusCircle className="w-4 h-4" />
+              <span>Add New Property</span>
             </Button>
           </Link>
         </div>
-      </div>
 
-      {/* Properties Overview */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {properties?.map((property) => (
-          <Card key={property.id}>
-            <CardHeader>
-              <CardTitle>{property.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-sm text-gray-600">{property.address}</p>
-              <div className="mt-4">
-                <p>Units: {property.units}</p>
-                <p>Status: {property.status}</p>
-                <p>Views: {property.pageViews}</p>
-                <p>Applications: {property.submissionCount}</p>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {properties?.map((property) => (
+            <Card key={property.id}>
+              <CardHeader>
+                <CardTitle>{property.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <p className="text-sm text-gray-600">{property.address}</p>
+                <div className="mt-4">
+                  <p>Units: {property.units}</p>
+                  <p>Status: {property.status}</p>
+                  <p>Views: {property.pageViews}</p>
+                  <p>Applications: {property.submissionCount}</p>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
       </div>
 
       {/* Bulk Application Manager */}
@@ -129,7 +257,13 @@ const LandlordDashboard = () => {
         <BulkApplicationManager
           applications={applications}
           properties={properties}
-          onUpdateApplications={handleUpdateApplications}
+          onUpdateApplications={async (applicationIds: number[], status: 'approved' | 'rejected') => {
+            try {
+              await updateApplicationsMutation.mutateAsync({ applicationIds, status });
+            } catch (error) {
+              console.error('Failed to update applications:', error);
+            }
+          }}
         />
       )}
     </div>
