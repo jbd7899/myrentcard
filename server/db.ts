@@ -18,8 +18,6 @@ export const pool = new Pool({
   connectionTimeoutMillis: 15000,
   max: 5,
   idleTimeoutMillis: 60000,
-  retryInterval: 5000,
-  maxUses: 7500,
   ssl: true
 });
 
@@ -27,6 +25,7 @@ export const pool = new Pool({
 pool.on('error', (err) => {
   console.error('Unexpected error on idle client', err);
 });
+
 export const db = drizzle(pool, { schema });
 
 // Test the connection with retry logic
