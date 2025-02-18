@@ -37,7 +37,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       console.log("[Debug] Created test tenant:", testTenant);
 
-      // Create test properties
+      // Update test property creation with rent field
       const property1 = await storage.createProperty({
         landlordId: testLandlord.id,
         title: "Luxury Downtown Apartment",
@@ -50,6 +50,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pageViews: 0,
         uniqueVisitors: 0,
         submissionCount: 0,
+        rent: 2500,
         imageUrl: null
       });
 
@@ -65,27 +66,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pageViews: 0,
         uniqueVisitors: 0,
         submissionCount: 0,
+        rent: 3000,
         imageUrl: null
       });
 
-      // Create test applications using the real tenant ID
+      // Update test applications with proper status typing
       const testApplications = [
         {
           propertyId: property1.id,
           tenantId: testTenant.id,
-          status: "pending",
+          status: 'pending' as const,
           message: "Interested in moving in next month"
         },
         {
           propertyId: property1.id,
           tenantId: testTenant.id,
-          status: "pending",
+          status: 'pending' as const,
           message: "Looking for immediate move-in"
         },
         {
           propertyId: property2.id,
           tenantId: testTenant.id,
-          status: "pending",
+          status: 'pending' as const,
           message: "Family of four, excellent rental history"
         }
       ];
