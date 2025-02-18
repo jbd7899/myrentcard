@@ -1,12 +1,22 @@
 import React, { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useRoute } from 'wouter';
 import { Building2, Shield, Calendar, Users, PawPrint, Car, Briefcase, HelpCircle, ArrowRight } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import ScreeningLayout from '@/components/ScreeningLayout';
+import type { ScreeningPage } from '@shared/schema';
 
 export default function SamplePrescreeningPage() {
   const [loading, setLoading] = useState(false);
   const [showTraditionalForm, setShowTraditionalForm] = useState(false);
+  const [, params] = useRoute('/screening/:urlId');
+  const urlId = params?.urlId;
+
+  // Fetch screening page data
+  const { data: screeningPage, isLoading: pageLoading } = useQuery<ScreeningPage>({
+    queryKey: [`/api/screening/${urlId}`],
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -18,14 +28,33 @@ export default function SamplePrescreeningPage() {
     }, 1500);
   };
 
+  if (pageLoading) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+      </div>
+    );
+  }
+
+  if (!screeningPage) {
+    return (
+      <div className="flex justify-center items-center min-h-screen">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900">Screening Page Not Found</h1>
+          <p className="text-gray-600 mt-2">This screening page may have been removed or is no longer available.</p>
+        </div>
+      </div>
+    );
+  }
+
   return (
-    <ScreeningLayout>
+    <ScreeningLayout screeningPage={screeningPage}>
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <Card className="mb-8">
           <CardHeader>
-            <CardTitle>Submit Your Application</CardTitle>
+            <CardTitle>{screeningPage.title}</CardTitle>
             <CardDescription>
-              Choose how you'd like to apply for this property
+              {screeningPage.description || "Choose how you'd like to apply for this property"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -64,7 +93,7 @@ export default function SamplePrescreeningPage() {
               <div className="border-t pt-6">
                 <h3 className="text-lg font-medium mb-2">Option 2: Traditional Application</h3>
                 <p className="text-sm text-gray-600 mb-4">
-                  Fill out a standard rental application form specifically for this property
+                  Fill out a standard rental application form
                 </p>
                 <button 
                   className="text-blue-600 hover:underline flex items-center"
