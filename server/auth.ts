@@ -33,7 +33,7 @@ export function setupAuth(app: Express) {
     proxy: true,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: !isDevelopment, // Only use secure cookies in production
       sameSite: 'lax',
       maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     }
@@ -54,13 +54,9 @@ export function setupAuth(app: Express) {
 
   // Add session debug middleware
   app.use((req, res, next) => {
-    const oldEnd = res.end;
-    // @ts-ignore
-    res.end = function (...args) {
-      console.log('[Auth Debug] Response Headers:', res.getHeaders());
-      // @ts-ignore
-      oldEnd.apply(res, args);
-    };
+    console.log('[Auth Debug] Session:', req.session);
+    console.log('[Auth Debug] isAuthenticated:', req.isAuthenticated());
+    console.log('[Auth Debug] Headers:', req.headers);
     next();
   });
 
@@ -112,7 +108,6 @@ export function setupAuth(app: Express) {
     }
   });
 
-  // Auth routes with improved error handling and logging
   app.post("/api/register", async (req, res, next) => {
     try {
       console.log('[Auth Debug] Registration attempt:', { username: req.body.username });

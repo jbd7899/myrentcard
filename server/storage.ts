@@ -1,4 +1,4 @@
-import type { InsertUser, User, Property, Application, ApplicationStatus, ScreeningPage, ScreeningSubmission, InsertScreeningPage, InsertScreeningSubmission } from "@shared/schema";
+import type { InsertUser, User, Property, Application, ApplicationStatus, ScreeningPage, ScreeningSubmission } from "@shared/schema";
 import { users, properties, applications, screeningPages, screeningSubmissions } from "@shared/schema";
 import { db } from "./db";
 import { eq, inArray, sql } from "drizzle-orm";
@@ -46,9 +46,13 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
+    // Enhanced session store configuration
     this.sessionStore = new PostgresSessionStore({
       pool,
       createTableIfMissing: true,
+      tableName: 'session', // Explicit table name
+      // Pruning configuration
+      pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
     });
   }
 
