@@ -45,7 +45,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       console.log("[Debug] Created test tenant:", testTenant);
 
-      // Create test properties with proper rent values
+      // Create test properties
       const property1 = await storage.createProperty({
         landlordId: testLandlord.id,
         title: "Luxury Downtown Apartment",
@@ -79,6 +79,80 @@ export async function registerRoutes(app: Express): Promise<Server> {
         imageUrl: null
       });
       console.log("[Debug] Created test property 2:", property2);
+
+      // Create test screening pages
+      const generalScreeningPage = await storage.createScreeningPage({
+        landlordId: testLandlord.id,
+        propertyId: null,
+        type: "general",
+        urlId: generateUrlId(),
+        title: "Test1 General Rental Application",
+        description: "Apply for any of our available properties",
+        customFields: [
+          {
+            id: "income",
+            type: "number",
+            label: "Monthly Income",
+            required: true,
+            validation: {
+              min: 0,
+              message: "Please enter a valid income amount"
+            }
+          },
+          {
+            id: "employment",
+            type: "text",
+            label: "Current Employer",
+            required: true
+          }
+        ],
+        branding: {
+          logo: null,
+          primaryColor: "#4361ee",
+          accentColor: "#3a0ca3",
+          fontFamily: "Inter",
+          customCss: ""
+        },
+        active: true
+      });
+      console.log("[Debug] Created general screening page:", generalScreeningPage);
+
+      const propertyScreeningPage = await storage.createScreeningPage({
+        landlordId: testLandlord.id,
+        propertyId: property1.id,
+        type: "property",
+        urlId: generateUrlId(),
+        title: `${property1.title} - Rental Application`,
+        description: `Apply for ${property1.title} at ${property1.address}`,
+        customFields: [
+          {
+            id: "moveInDate",
+            type: "date",
+            label: "Desired Move-in Date",
+            required: true
+          },
+          {
+            id: "occupants",
+            type: "number",
+            label: "Number of Occupants",
+            required: true,
+            validation: {
+              min: 1,
+              max: 10,
+              message: "Please enter a number between 1 and 10"
+            }
+          }
+        ],
+        branding: {
+          logo: null,
+          primaryColor: "#4361ee",
+          accentColor: "#3a0ca3",
+          fontFamily: "Inter",
+          customCss: ""
+        },
+        active: true
+      });
+      console.log("[Debug] Created property screening page:", propertyScreeningPage);
 
       // Create test applications
       const testApplications = [
