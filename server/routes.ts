@@ -98,11 +98,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Property routes
   app.get("/api/properties", async (req, res) => {
+    console.log("[Property Debug] GET /api/properties");
+    console.log("[Property Debug] User authenticated:", req.isAuthenticated());
+    console.log("[Property Debug] User:", req.user);
+
     if (!req.isAuthenticated()) {
+      console.log("[Property Debug] User not authenticated");
       return res.sendStatus(401);
     }
-    const properties = await storage.getAllProperties();
-    res.json(properties);
+
+    try {
+      const properties = await storage.getAllProperties();
+      console.log("[Property Debug] Retrieved properties:", properties);
+      res.json(properties);
+    } catch (error) {
+      console.error("[Property Debug] Error fetching properties:", error);
+      res.status(500).json({ message: "Failed to fetch properties" });
+    }
   });
 
   app.post("/api/properties", async (req, res) => {
