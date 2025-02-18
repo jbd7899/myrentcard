@@ -2,8 +2,8 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
-import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { storage } from "./storage.js";
+import { User as SelectUser } from "@shared/schema.js";
 import cors from "cors";
 
 declare global {
