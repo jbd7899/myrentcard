@@ -139,15 +139,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      const property = await storage.createProperty({
+      // Ensure imageUrl is either a string or null before creating property
+      const propertyData = {
         ...validation.data,
         landlordId: req.user.id,
-        status: "Available",
+        status: "Available" as const,
         available: true,
         pageViews: 0,
         uniqueVisitors: 0,
-        submissionCount: 0
-      });
+        submissionCount: 0,
+        imageUrl: validation.data.imageUrl || null // Ensure imageUrl is properly handled
+      };
+
+      const property = await storage.createProperty(propertyData);
       res.status(201).json(property);
     } catch (error) {
       console.error("Failed to create property:", error);
@@ -155,19 +159,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Track RentCard view
-  app.post("/api/rentcard/:id/view", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.type !== "landlord") {
-      return res.sendStatus(403);
-    }
-    const rentCardId = parseInt(req.params.id);
-    const viewRecord = await storage.createRentCardView({
-      rentCardId,
-      landlordId: req.user.id,
-      viewedAt: new Date()
-    });
-    res.status(201).json(viewRecord);
-  });
 
   // Track property page view
   app.post("/api/properties/:id/view", async (req, res) => {
