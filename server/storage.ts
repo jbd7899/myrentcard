@@ -33,10 +33,9 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    // Initialize session store with debug logging
+    // Initialize session store with proper options
     this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000,
-      debug: true,
+      checkPeriod: 86400000, // 24 hours
       stale: true
     });
   }
