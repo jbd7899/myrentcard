@@ -36,31 +36,57 @@ app.use((req, res, next) => {
   next();
 });
 
-(async () => {
-  const server = await registerRoutes(app);
+const startServer = async (initialPort: number) => {
+  try {
+    const server = await registerRoutes(app);
 
-  app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-    const status = err.status || err.statusCode || 500;
-    const message = err.message || "Internal Server Error";
-
-    res.status(status).json({ message });
-    throw err;
-  });
-
-  if (app.get("env") === "development") {
-    await setupVite(app, server);
-  } else {
-    app.use(express.static('dist/client'));
-    app.get('/', (req, res) => {
-      res.sendFile('dist/client/index.html', { root: '.' });
+    app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
+      const status = err.status || err.statusCode || 500;
+      const message = err.message || "Internal Server Error";
+      res.status(status).json({ message });
+      throw err;
     });
-    app.get('*', (req, res) => {
-      res.sendFile('dist/client/index.html', { root: '.' });
+
+    if (app.get("env") === "development") {
+      await setupVite(app, server);
+    } else {
+      app.use(express.static('dist/client'));
+      app.get('*', (req, res) => {
+        res.sendFile('dist/client/index.html', { root: '.' });
+      });
+    }
+
+    return new Promise((resolve, reject) => {
+      const tryPort = (port: number) => {
+        server.listen(port, "0.0.0.0")
+          .on('error', (err: any) => {
+            if (err.code === 'EADDRINUSE') {
+              log(`Port ${port} is in use, trying ${port + 1}`);
+              tryPort(port + 1);
+            } else {
+              reject(err);
+            }
+          })
+          .on('listening', () => {
+            log(`serving on port ${port}`);
+            resolve(server);
+          });
+      };
+
+      tryPort(initialPort);
     });
+  } catch (error) {
+    log(`Error during server startup: ${error}`);
+    throw error;
   }
+};
 
-  const PORT = 3000;  // Changed from 5000 to 3000
-  server.listen(PORT, "0.0.0.0", () => {
-    log(`serving on port ${PORT}`);
-  });
+(async () => {
+  try {
+    const PORT = parseInt(process.env.PORT || "5000", 10);
+    await startServer(PORT);
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
 })();
