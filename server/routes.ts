@@ -89,7 +89,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Property routes
   app.get("/api/properties", async (req, res) => {
     if (!req.isAuthenticated()) {
-      return res.sendStatus(403);
+      return res.sendStatus(401);
     }
     const properties = await storage.getAllProperties();
     res.json(properties);
@@ -140,7 +140,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Application routes
   app.get("/api/applications", async (req, res) => {
     if (!req.isAuthenticated()) {
-      return res.sendStatus(403);
+      return res.sendStatus(401);
     }
 
     let applications;
