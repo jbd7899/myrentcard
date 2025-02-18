@@ -6,6 +6,7 @@ import { Clock, Mail, Phone, Edit2, Share2, Eye, ExternalLink } from 'lucide-rea
 
 const TenantAccount = () => {
   const [activeTab, setActiveTab] = useState('profile');
+  const [rentCardViews, setRentCardViews] = useState([]);
   
   // Sample data - would come from backend in real implementation
   const accountInfo = {
@@ -49,6 +50,12 @@ const TenantAccount = () => {
           onClick={() => setActiveTab('sharing')}
         >
           Sharing History
+        </button>
+        <button
+          className={'pb-2 px-4 ' + (activeTab === 'scheduling' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600')}
+          onClick={() => setActiveTab('scheduling')}
+        >
+          Schedule Viewings
         </button>
         <button
           className={'pb-2 px-4 ' + (activeTab === 'references' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600')}
@@ -170,6 +177,39 @@ const TenantAccount = () => {
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Scheduling Section */}
+      {activeTab === 'scheduling' && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Schedule Property Viewings</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {rentCardViews.length > 0 ? (
+              <div className="space-y-4">
+                {rentCardViews.map((view) => (
+                  <div key={view.id} className="p-4 border rounded-lg">
+                    <h3 className="font-medium">{view.propertyName}</h3>
+                    <p className="text-sm text-gray-600">Viewed by {view.landlordName}</p>
+                    <div className="mt-4">
+                      <Button 
+                        onClick={() => setShowScheduling(view.id)}
+                        className="w-full sm:w-auto"
+                      >
+                        Schedule Viewing
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-600">
+                No landlords have viewed your RentCard yet. Share your RentCard to get started!
+              </div>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* References Section */}

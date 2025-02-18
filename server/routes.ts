@@ -91,6 +91,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(201).json(property);
   });
 
+  // Track RentCard view
+  app.post("/api/rentcard/:id/view", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.type !== "landlord") {
+      return res.sendStatus(403);
+    }
+    const rentCardId = parseInt(req.params.id);
+    const viewRecord = await storage.createRentCardView({
+      rentCardId,
+      landlordId: req.user.id,
+      viewedAt: new Date()
+    });
+    res.status(201).json(viewRecord);
+  });
+
   // Track property page view
   app.post("/api/properties/:id/view", async (req, res) => {
     const propertyId = parseInt(req.params.id);
