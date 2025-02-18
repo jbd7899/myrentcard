@@ -1,68 +1,69 @@
-import { pgTable, text, serial, integer, boolean, jsonb, timestamp } from "drizzle-orm/pg-core";
-import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
-  username: text("username").notNull().unique(),
-  password: text("password").notNull(),
-  type: text("type", { enum: ["tenant", "landlord"] }).notNull(),
-  name: text("name").notNull(),
-  email: text("email").notNull(),
-  phone: text("phone"),
-  createdAt: timestamp("created_at").defaultNow(),
+// User schema
+const userSchema = z.object({
+  id: z.number(),
+  username: z.string(),
+  password: z.string(),
+  type: z.enum(["tenant", "landlord"]),
+  name: z.string(),
+  email: z.string(),
+  phone: z.string().optional(),
+  createdAt: z.date()
 });
 
-export const properties = pgTable("properties", {
-  id: serial("id").primaryKey(),
-  landlordId: integer("landlord_id").notNull(),
-  title: text("title").notNull(),
-  description: text("description").notNull(),
-  imageUrl: text("image_url"),
-  address: text("address").notNull(),
-  units: integer("units").notNull(),
-  parkingSpaces: integer("parking_spaces").notNull(),
-  status: text("status", { enum: ["Available", "Rented", "Pending"] }).notNull().default("Available"),
-  available: boolean("available").default(true),
-  pageViews: integer("page_views").default(0),
-  uniqueVisitors: integer("unique_visitors").default(0),
-  submissionCount: integer("submission_count").default(0),
-  createdAt: timestamp("created_at").defaultNow(),
+// Property schema
+const propertySchema = z.object({
+  id: z.number(),
+  landlordId: z.number(),
+  title: z.string(),
+  description: z.string(),
+  imageUrl: z.string().optional(),
+  address: z.string(),
+  units: z.number(),
+  parkingSpaces: z.number(),
+  status: z.enum(["Available", "Rented", "Pending"]).default("Available"),
+  available: z.boolean().default(true),
+  pageViews: z.number().default(0),
+  uniqueVisitors: z.number().default(0),
+  submissionCount: z.number().default(0),
+  createdAt: z.date()
 });
 
-export const applications = pgTable("applications", {
-  id: serial("id").primaryKey(),
-  propertyId: integer("property_id").notNull(),
-  tenantId: integer("tenant_id").notNull(),
-  status: text("status", { enum: ["pending", "approved", "rejected"] }).notNull(),
-  message: text("message"),
-  createdAt: timestamp("created_at").defaultNow(),
+// Application schema
+const applicationSchema = z.object({
+  id: z.number(),
+  propertyId: z.number(),
+  tenantId: z.number(),
+  status: z.enum(["pending", "approved", "rejected"]),
+  message: z.string().optional(),
+  createdAt: z.date()
 });
 
-// Create insert schemas
-export const insertUserSchema = createInsertSchema(users).omit({
+// Create insert schemas (omitting auto-generated fields)
+export const insertUserSchema = userSchema.omit({ 
   id: true,
-  createdAt: true,
+  createdAt: true 
 });
 
-export const insertPropertySchema = createInsertSchema(properties).omit({
+export const insertPropertySchema = propertySchema.omit({ 
   id: true,
   createdAt: true,
   pageViews: true,
   uniqueVisitors: true,
-  submissionCount: true,
+  submissionCount: true
 });
 
-export const insertApplicationSchema = createInsertSchema(applications).omit({
+export const insertApplicationSchema = applicationSchema.omit({ 
   id: true,
-  createdAt: true,
+  createdAt: true 
 });
 
 // Export types
+export type User = z.infer<typeof userSchema>;
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type User = typeof users.$inferSelect;
-export type Property = typeof properties.$inferSelect;
-export type Application = typeof applications.$inferSelect;
+export type Property = z.infer<typeof propertySchema>;
+export type Application = z.infer<typeof applicationSchema>;
 
 // Property requirements schema
 export const propertyRequirementsSchema = z.object({
