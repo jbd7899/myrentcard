@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Building2, Users, Upload } from 'lucide-react';
+import { Plus, Building2, Users } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -11,6 +11,19 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 
+interface NewPropertyFormData {
+  title: string;
+  description: string;
+  imageUrl: string;
+  address: string;
+  units: string;
+  parkingSpaces: string;
+  requirements: {
+    noEvictions: boolean;
+    cleanRentalHistory: boolean;
+  };
+}
+
 const LandlordDashboard = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -18,24 +31,11 @@ const LandlordDashboard = () => {
   const [showAddProperty, setShowAddProperty] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
-  console.log("[Dashboard Debug] Current user:", user);
-
   // Only fetch properties if user is authenticated
-  const { data: properties, isLoading: isLoadingProperties, error: propertiesError } = useQuery({
+  const { data: properties, isLoading: isLoadingProperties, error: propertiesError } = useQuery<Property[]>({
     queryKey: ['/api/properties'],
     enabled: !!user,
-    retry: 1,
-    onError: (error: Error) => {
-      console.error("[Dashboard Debug] Properties fetch error:", error);
-      toast({
-        title: "Error loading properties",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-    onSuccess: (data) => {
-      console.log("[Dashboard Debug] Properties loaded:", data);
-    }
+    retry: 1
   });
 
   const { data: applications, isLoading: isLoadingApplications } = useQuery<Application[]>({
@@ -44,7 +44,6 @@ const LandlordDashboard = () => {
 
   const createPropertyMutation = useMutation({
     mutationFn: async (propertyData: Omit<Property, 'id' | 'createdAt' | 'pageViews' | 'uniqueVisitors' | 'submissionCount'>) => {
-      // First upload the image if selected
       let imageUrl = null;
       if (selectedImage) {
         const formData = new FormData();
@@ -65,7 +64,6 @@ const LandlordDashboard = () => {
         }
       }
 
-      // Then create the property with the image URL
       const response = await apiRequest('POST', '/api/properties', { 
         ...propertyData, 
         imageUrl 
@@ -134,14 +132,14 @@ const LandlordDashboard = () => {
     const propertyData = {
       title: newProperty.title,
       description: newProperty.description,
-      imageUrl: null, // Will be set after upload
+      imageUrl: null as string | null,
       address: newProperty.address,
       units: parseInt(newProperty.units),
       parkingSpaces: parseInt(newProperty.parkingSpaces),
       requirements: newProperty.requirements,
       status: 'Available' as const,
       available: true,
-      landlordId: 1, // This should come from the authenticated user
+      landlordId: user?.id || 0,
     };
 
     try {
