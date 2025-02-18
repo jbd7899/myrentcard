@@ -20,7 +20,11 @@ const LandlordDashboard = () => {
     isLoading: propertiesLoading,
     error: propertiesError 
   } = useQuery<Property[]>({
-    queryKey: ['properties'],
+    queryKey: ['/api/properties'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/properties');
+      return res.json();
+    },
     retry: 3,
   });
 
@@ -30,7 +34,11 @@ const LandlordDashboard = () => {
     isLoading: applicationsLoading,
     error: applicationsError 
   } = useQuery<Application[]>({
-    queryKey: ['applications'],
+    queryKey: ['/api/applications'],
+    queryFn: async () => {
+      const res = await apiRequest('GET', '/api/applications');
+      return res.json();
+    },
     retry: 3,
   });
 
@@ -44,7 +52,7 @@ const LandlordDashboard = () => {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
       toast({
         title: "Success",
         description: "Applications updated successfully",
@@ -117,7 +125,7 @@ const LandlordDashboard = () => {
       </div>
 
       {/* Bulk Application Manager */}
-      {applications && properties && (
+      {applications && applications.length > 0 && properties && (
         <BulkApplicationManager
           applications={applications}
           properties={properties}

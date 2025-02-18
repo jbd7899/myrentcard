@@ -1,7 +1,7 @@
 import type { InsertUser, User, Property, Application } from "@shared/schema";
 import { users, properties, applications } from "@shared/schema";
 import { db } from "./db";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -77,18 +77,14 @@ export class DatabaseStorage implements IStorage {
   async incrementPropertyViews(id: number): Promise<void> {
     await db
       .update(properties)
-      .set({ 
-        pageViews: db.raw('page_views + 1')
-      })
+      .set({ pageViews: db.raw('page_views + 1') })
       .where(eq(properties.id, id));
   }
 
   async incrementPropertySubmissions(id: number): Promise<void> {
     await db
       .update(properties)
-      .set({ 
-        submissionCount: db.raw('submission_count + 1')
-      })
+      .set({ submissionCount: db.raw('submission_count + 1') })
       .where(eq(properties.id, id));
   }
 
@@ -112,9 +108,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(applications)
-      .where(
-        eq(applications.propertyId, propertyIds[0])
-      );
+      .where(inArray(applications.propertyId, propertyIds));
   }
 
   async bulkUpdateApplications(applicationIds: number[], status: 'approved' | 'rejected'): Promise<void> {
@@ -123,9 +117,7 @@ export class DatabaseStorage implements IStorage {
     await db
       .update(applications)
       .set({ status })
-      .where(
-        eq(applications.id, applicationIds[0])
-      );
+      .where(inArray(applications.id, applicationIds));
   }
 
   async hashPassword(password: string): Promise<string> {
