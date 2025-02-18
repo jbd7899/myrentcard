@@ -13,9 +13,10 @@ export default function SamplePrescreeningPage() {
   const [, params] = useRoute('/screening/:urlId');
   const urlId = params?.urlId;
 
-  // Fetch screening page data
+  // Fetch screening page data using urlId
   const { data: screeningPage, isLoading: pageLoading } = useQuery<ScreeningPage>({
     queryKey: [`/api/screening/${urlId}`],
+    enabled: !!urlId,
   });
 
   const handleSubmit = (e: React.FormEvent) => {

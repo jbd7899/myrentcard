@@ -9,9 +9,15 @@ import fs from 'fs';
 import { insertPropertySchema, insertApplicationSchema, insertScreeningPageSchema, insertScreeningSubmissionSchema } from "@shared/schema";
 import crypto from 'crypto';
 
-// Add helper function for generating random URL IDs
+// Helper function for generating random URL IDs at the top of the file
 function generateUrlId(): string {
-  return crypto.randomBytes(32).toString('hex');
+  const length = 32;
+  const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+  let result = '';
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
 }
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -85,7 +91,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         landlordId: testLandlord.id,
         propertyId: null,
         type: "general",
-        urlId: generateUrlId(),
+        urlId: generateUrlId(), // Generate random URL ID
         title: "Test1 General Rental Application",
         description: "Apply for any of our available properties",
         customFields: [
@@ -121,7 +127,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         landlordId: testLandlord.id,
         propertyId: property1.id,
         type: "property",
-        urlId: generateUrlId(),
+        urlId: generateUrlId(), // Generate random URL ID
         title: `${property1.title} - Rental Application`,
         description: `Apply for ${property1.title} at ${property1.address}`,
         customFields: [
