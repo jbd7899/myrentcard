@@ -15,11 +15,12 @@ console.log("[Database] Connecting to database...");
 
 export const pool = new Pool({ 
   connectionString: process.env.DATABASE_URL,
-  connectionTimeoutMillis: 10000,
-  max: 10,
-  idleTimeoutMillis: 30000,
-  retryInterval: 2000,
-  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: true } : false
+  connectionTimeoutMillis: 15000,
+  max: 5,
+  idleTimeoutMillis: 60000,
+  retryInterval: 5000,
+  maxUses: 7500,
+  ssl: true
 });
 
 // Add event listeners for connection issues
