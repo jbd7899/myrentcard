@@ -43,7 +43,18 @@ const EditScreeningPage = () => {
   // Update form when data is loaded
   React.useEffect(() => {
     if (screeningPage) {
-      form.reset(screeningPage);
+      // Transform the data to match form structure
+      const formData = {
+        title: screeningPage.title,
+        description: screeningPage.description || '', // Convert null to empty string
+        requirements: {
+          minCreditScore: screeningPage.requirements.minCreditScore,
+          minIncome: screeningPage.requirements.minIncome,
+          noEvictions: screeningPage.requirements.noEvictions,
+          cleanRentalHistory: screeningPage.requirements.cleanRentalHistory,
+        },
+      };
+      form.reset(formData);
     }
   }, [screeningPage, form]);
 
@@ -126,7 +137,7 @@ const EditScreeningPage = () => {
 
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Requirements</h3>
-                
+
                 <FormField
                   control={form.control}
                   name="requirements.minCreditScore"
@@ -134,7 +145,7 @@ const EditScreeningPage = () => {
                     <FormItem>
                       <FormLabel>Minimum Credit Score</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -148,7 +159,7 @@ const EditScreeningPage = () => {
                     <FormItem>
                       <FormLabel>Minimum Monthly Income ($)</FormLabel>
                       <FormControl>
-                        <Input type="number" {...field} />
+                        <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
