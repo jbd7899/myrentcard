@@ -7,7 +7,7 @@ export const users = pgTable('users', {
   id: serial('id').primaryKey(),
   username: varchar('username', { length: 255 }).notNull(),
   password: varchar('password', { length: 255 }).notNull(),
-  type: varchar('type', { length: 50 }).notNull(),
+  type: varchar('type', { length: 50 }).notNull(),  // Can be "tenant", "landlord", or "both"
   name: varchar('name', { length: 255 }).notNull(),
   email: varchar('email', { length: 255 }).notNull(),
   phone: varchar('phone', { length: 50 }),
@@ -44,7 +44,7 @@ export const applications = pgTable('applications', {
 
 // Create Zod schemas from the table definitions
 export const insertUserSchema = createInsertSchema(users, {
-  type: z.enum(["tenant", "landlord"]),
+  type: z.enum(["tenant", "landlord", "both"]),
 }).omit({ id: true, createdAt: true });
 
 export const insertPropertySchema = createInsertSchema(properties).omit({

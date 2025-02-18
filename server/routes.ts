@@ -15,21 +15,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!existingTestUser) {
       console.log("[Debug] No test account found, creating test accounts...");
 
-      // Create test landlord
+      // Create test landlord/tenant combo account
       const testLandlord = await storage.createUser({
         username: "test1",
         password: "test1",
-        type: "landlord",
-        name: "Test Landlord 1", 
+        type: "both",  // Allow both roles
+        name: "Test User 1", 
         email: "test1@example.com",
         phone: "1234567890"
       });
-      console.log("[Debug] Created test landlord:", testLandlord);
+      console.log("[Debug] Created test user:", testLandlord);
 
       // Create test tenant
       const testTenant = await storage.createUser({
         username: "testtenant1",
-        password: "test1",
+        password: "test1",  // Using the same password as test1
         type: "tenant",
         name: "Test Tenant 1",
         email: "tenant1@example.com",
@@ -180,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.sendStatus(401);
     }
 
-    if (req.user.type !== "landlord") {
+    if (req.user.type !== "landlord" && req.user.type !== "both") {
       return res.status(403).json({ message: "Only landlords can create properties" });
     }
 
@@ -226,7 +226,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     let applications;
-    if (req.user.type === "tenant") {
+    if (req.user.type === "tenant" || req.user.type === "both") {
       applications = await storage.getTenantApplications(req.user.id);
     } else if (req.user.type === "landlord") {
       applications = await storage.getLandlordApplications(req.user.id);
@@ -238,7 +238,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/applications", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.type !== "tenant") {
+    if (!req.isAuthenticated() || req.user.type !== "tenant" && req.user.type !== "both") {
       return res.sendStatus(403);
     }
 
@@ -266,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.patch("/api/applications/bulk", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.type !== "landlord") {
+    if (!req.isAuthenticated() || req.user.type !== "landlord" && req.user.type !== "both") {
       return res.sendStatus(403);
     }
 
