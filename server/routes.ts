@@ -421,6 +421,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!page) {
         return res.status(404).json({ message: "Screening page not found" });
       }
+
+      // Increment the view counter when the page is accessed
+      await storage.incrementScreeningPageViews(page.id);
+
       res.json(page);
     } catch (error) {
       console.error("Failed to fetch screening page:", error);
