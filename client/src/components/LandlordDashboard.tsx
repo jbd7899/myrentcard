@@ -257,13 +257,7 @@ const LandlordDashboard = () => {
         <BulkApplicationManager
           applications={applications}
           properties={properties}
-          onUpdateApplications={async (applicationIds: number[], status: 'approved' | 'rejected') => {
-            try {
-              await updateApplicationsMutation.mutateAsync({ applicationIds, status });
-            } catch (error) {
-              console.error('Failed to update applications:', error);
-            }
-          }}
+          onUpdateApplications={handleUpdateApplications}
         />
       )}
     </div>

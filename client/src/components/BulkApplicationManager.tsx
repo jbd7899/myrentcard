@@ -28,12 +28,13 @@ interface Application {
   createdAt: Date;
   propertyId: number;
   tenantId: number;
-  message?: string;
+  message?: string | null;
 }
 
 interface Property {
   id: number;
   title: string;
+  rent: number;
 }
 
 interface BulkApplicationManagerProps {
