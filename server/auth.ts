@@ -34,9 +34,8 @@ export function setupAuth(app: Express) {
     cookie: {
       httpOnly: true,
       secure: true,
-      sameSite: 'none',
-      maxAge: 30 * 24 * 60 * 60 * 1000,
-      domain: undefined
+      sameSite: 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     }
   };
 
@@ -181,11 +180,10 @@ export function setupAuth(app: Express) {
       req.session.destroy((err) => {
         if (err) return next(err);
         res.clearCookie('rentcard.sid', {
-          domain: process.env.NODE_ENV === 'production' ? '.myrentcard.com' : undefined,
           path: '/',
           httpOnly: true,
           secure: true,
-          sameSite: 'none'
+          sameSite: 'lax'
         });
         console.log("[Auth Debug] Logout successful, session destroyed");
         res.sendStatus(200);
