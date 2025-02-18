@@ -41,6 +41,34 @@ const LandlordDashboard = () => {
     queryKey: ['/api/screening-pages'],
   });
 
+  // Mutation for bulk updating applications
+  const updateApplicationsMutation = useMutation({
+    mutationFn: async ({ applicationIds, status }: { applicationIds: number[], status: 'approved' | 'rejected' }) => {
+      await apiRequest('PATCH', '/api/applications/bulk', {
+        applicationIds,
+        status,
+      });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
+      toast({
+        title: "Success",
+        description: "Applications updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update applications: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleUpdateApplications = async (applicationIds: number[], status: 'approved' | 'rejected') => {
+    await updateApplicationsMutation.mutateAsync({ applicationIds, status });
+  };
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);
@@ -179,7 +207,7 @@ const LandlordDashboard = () => {
                   <div className="space-y-4">
                     <div className="text-sm text-gray-600">
                       <p>Status: {property.status}</p>
-                      <p>Applications: {screeningPage?.submissions?.length || 0}</p>
+                      <p>Applications: {screeningPage?.submissionCount || 0}</p>
                     </div>
                     <div className="flex space-x-2">
                       <Button 
