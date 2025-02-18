@@ -1,4 +1,5 @@
 import { Building2 } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Link, useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -62,11 +63,52 @@ export default function Layout({ children }: { children: ReactNode }) {
             </div>
 
             <div className="md:hidden">
-              <button className="menu-toggle">
-                <span></span>
-                <span></span>
-                <span></span>
-              </button>
+              <Sheet>
+                <SheetTrigger asChild>
+                  <button className="menu-toggle p-2">
+                    <span className="block w-6 h-0.5 bg-gray-600 mb-1.5"></span>
+                    <span className="block w-6 h-0.5 bg-gray-600 mb-1.5"></span>
+                    <span className="block w-6 h-0.5 bg-gray-600"></span>
+                  </button>
+                </SheetTrigger>
+                <SheetContent>
+                  <div className="flex flex-col gap-6 mt-8">
+                    <Link href="#how-it-works">
+                      <span className="text-gray-600 hover:text-gray-900 cursor-pointer">How It Works</span>
+                    </Link>
+                    <Link href="#benefits">
+                      <span className="text-gray-600 hover:text-gray-900 cursor-pointer">Benefits</span>
+                    </Link>
+                    <Link href="#testimonials">
+                      <span className="text-gray-600 hover:text-gray-900 cursor-pointer">Testimonials</span>
+                    </Link>
+                    <Link href="#faq">
+                      <span className="text-gray-600 hover:text-gray-900 cursor-pointer">FAQ</span>
+                    </Link>
+                    {user ? (
+                      <>
+                        <Link href={user.type === 'landlord' ? '/landlord' : '/tenant'}>
+                          <Button variant="ghost" className="w-full">Dashboard</Button>
+                        </Link>
+                        <Button 
+                          variant="outline" 
+                          onClick={() => logoutMutation.mutate()}
+                          disabled={logoutMutation.isPending}
+                          className="w-full"
+                        >
+                          Logout
+                        </Button>
+                      </>
+                    ) : (
+                      <Link href="/auth" className="w-full">
+                        <Button className="w-full bg-[#4361ee] hover:bg-[#3a0ca3] text-white">
+                          Login
+                        </Button>
+                      </Link>
+                    )}
+                  </div>
+                </SheetContent>
+              </Sheet>
             </div>
           </div>
         </div>
