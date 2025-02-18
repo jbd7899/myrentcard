@@ -10,6 +10,8 @@ import fs from 'fs';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   try {
+    console.log("[Debug] Initializing routes and test data...");
+
     // Check if test account already exists
     const existingTestUser = await storage.getUserByUsername("test1");
     if (!existingTestUser) {
@@ -29,7 +31,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       // Create test tenant
       const testTenant = await storage.createUser({
         username: "testtenant1",
-        password: "test1",  // Using the same password as test1
+        password: "test1",
         type: "tenant",
         name: "Test Tenant 1",
         email: "tenant1@example.com",
@@ -37,7 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       console.log("[Debug] Created test tenant:", testTenant);
 
-      // Update test property creation with rent field
+      // Create test properties with proper rent values
       const property1 = await storage.createProperty({
         landlordId: testLandlord.id,
         title: "Luxury Downtown Apartment",
@@ -53,10 +55,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rent: 2500,
         imageUrl: null
       });
+      console.log("[Debug] Created test property 1:", property1);
 
       const property2 = await storage.createProperty({
         landlordId: testLandlord.id,
-        title: "Suburban Family Home", 
+        title: "Suburban Family Home",
         description: "Spacious 3-bedroom house with garden",
         address: "456 Oak Ave",
         units: 1,
@@ -69,8 +72,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         rent: 3000,
         imageUrl: null
       });
+      console.log("[Debug] Created test property 2:", property2);
 
-      // Update test applications with proper status typing
+      // Create test applications
       const testApplications = [
         {
           propertyId: property1.id,
@@ -93,16 +97,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ];
 
       for (const app of testApplications) {
-        await storage.createApplication(app);
+        const createdApp = await storage.createApplication(app);
+        console.log("[Debug] Created test application:", createdApp);
       }
 
-      console.log("[Debug] Created test properties and applications");
+      console.log("[Debug] Completed creating test data");
     } else {
       console.log("[Debug] Test account already exists, skipping creation");
     }
 
   } catch (error) {
     console.error("[Debug] Error managing test data:", error);
+    throw error; // Re-throw to ensure proper error handling
   }
 
   setupAuth(app);
