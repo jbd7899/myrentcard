@@ -50,7 +50,13 @@ app.use((req, res, next) => {
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
-    serveStatic(app);
+    app.use(express.static('dist/client'));
+    app.get('/', (req, res) => {
+      res.sendFile('dist/client/index.html', { root: '.' });
+    });
+    app.get('*', (req, res) => {
+      res.sendFile('dist/client/index.html', { root: '.' });
+    });
   }
 
   const PORT = 3000;  // Changed from 5000 to 3000
