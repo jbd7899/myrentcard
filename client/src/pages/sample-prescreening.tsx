@@ -2,44 +2,24 @@ import React, { useState } from 'react';
 import { Building2, Shield, Calendar, Users, PawPrint, Car, Briefcase, HelpCircle, ArrowRight } from 'lucide-react';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import ScreeningLayout from '@/components/ScreeningLayout';
 
 export default function SamplePrescreeningPage() {
   const [loading, setLoading] = useState(false);
   const [showTraditionalForm, setShowTraditionalForm] = useState(false);
-  
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     // Simulate submission
     setTimeout(() => {
       setLoading(false);
-      // Show toast notification
-      alert('This is a demo page. In a real application, your information would be submitted to the landlord.');
+      alert('Your application has been submitted successfully.');
     }, 1500);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Demo Banner */}
-      <div className="bg-blue-600 text-white text-center py-2 px-4">
-        <p className="text-sm font-medium">Demo Version - This is a sample application page</p>
-      </div>
-
-      {/* Header */}
-      <header className="bg-white border-b">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-2">
-            <Building2 className="h-8 w-8 text-blue-600" />
-            <div>
-              <h1 className="text-xl font-semibold">Horizon Property Management</h1>
-              <p className="text-sm text-gray-600">Powered by RentCard</p>
-            </div>
-          </div>
-          <Shield className="h-6 w-6 text-blue-600" />
-        </div>
-      </header>
-
-      {/* Main Content */}
+    <ScreeningLayout>
       <main className="container mx-auto px-4 py-8 max-w-4xl">
         <Card className="mb-8">
           <CardHeader>
@@ -156,7 +136,7 @@ export default function SamplePrescreeningPage() {
                   </div>
                   <button 
                     type="submit"
-                    className="w-full bg-gray-600 text-white py-3 px-4 rounded-lg hover:bg-gray-700 transition-colors"
+                    className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg hover:bg-blue-700 transition-colors"
                   >
                     Submit Application
                   </button>
@@ -171,7 +151,7 @@ export default function SamplePrescreeningPage() {
           <Alert>
             <Shield className="w-4 h-4 mr-2" />
             <AlertDescription>
-              Your information is secure and will only be shared with Horizon Property Management
+              Your information is secure and will only be shared with the property management
             </AlertDescription>
           </Alert>
           <div className="flex items-center justify-center space-x-4 text-sm text-gray-600">
@@ -184,6 +164,6 @@ export default function SamplePrescreeningPage() {
           </div>
         </div>
       </main>
-    </div>
+    </ScreeningLayout>
   );
 }
