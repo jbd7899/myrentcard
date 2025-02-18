@@ -7,16 +7,37 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import ScreeningLayout from '@/components/ScreeningLayout';
 import type { ScreeningPage } from '@shared/schema';
 
+// Sample screening page data for demonstration
+const sampleScreeningPage: ScreeningPage = {
+  id: 0,
+  createdAt: new Date(),
+  title: "Sample Pre-Screening Page",
+  description: "This is a sample pre-screening page to demonstrate the application process",
+  propertyId: null,
+  type: "sample",
+  urlId: "sample",
+  views: 0,
+  uniqueVisitors: 0,
+  submissionCount: 0,
+  requirements: {
+    minCreditScore: "650",
+    minIncome: "3000",
+    noEvictions: true,
+    cleanRentalHistory: true
+  }
+};
+
 export default function SamplePrescreeningPage() {
   const [loading, setLoading] = useState(false);
   const [showTraditionalForm, setShowTraditionalForm] = useState(false);
   const [, params] = useRoute('/screening/:urlId');
   const urlId = params?.urlId;
 
-  // Fetch screening page data using urlId
+  // For the sample page, we'll use the mock data if no urlId is provided
   const { data: screeningPage, isLoading: pageLoading } = useQuery<ScreeningPage>({
     queryKey: [`/api/screening/${urlId}`],
     enabled: !!urlId,
+    initialData: !urlId ? sampleScreeningPage : undefined
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -25,7 +46,7 @@ export default function SamplePrescreeningPage() {
     // Simulate submission
     setTimeout(() => {
       setLoading(false);
-      alert('Your application has been submitted successfully.');
+      alert('This is a sample application - in a real application, your information would be submitted to the landlord.');
     }, 1500);
   };
 
