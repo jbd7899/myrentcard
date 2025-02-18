@@ -38,7 +38,7 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  // Basic session configuration without domain-specific settings
+  // Enhanced session configuration with secure settings
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'development-secret',
     resave: false,
@@ -49,10 +49,11 @@ export function setupAuth(app: Express) {
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: 'lax',
-      // Don't set secure or domain - let the proxy handle it
+      secure: process.env.NODE_ENV === 'production'
     }
   };
 
+  app.set('trust proxy', 1);
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
@@ -141,6 +142,7 @@ export function setupAuth(app: Express) {
           console.error("Session creation error:", err);
           return next(err);
         }
+        console.log("Login successful for user:", user.id);
         res.status(200).json(user);
       });
     })(req, res, next);
