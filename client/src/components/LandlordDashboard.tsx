@@ -9,6 +9,8 @@ import type { Property, PropertyRequirements, Application } from '@shared/schema
 import PropertyAnalytics from './PropertyAnalytics';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAuth } from '@/hooks/use-auth'; //Import useAuth
+
 
 interface NewPropertyFormData {
   title: string;
@@ -25,21 +27,24 @@ const LandlordDashboard = () => {
   const queryClient = useQueryClient();
   const [showAddProperty, setShowAddProperty] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
-  const [newProperty, setNewProperty] = useState<NewPropertyFormData>({
-    title: '',
-    description: '',
-    imageUrl: '',
-    address: '',
-    units: '',
-    parkingSpaces: '',
-    requirements: {
-      noEvictions: true,
-      cleanRentalHistory: true
-    }
-  });
 
-  const { data: properties, isLoading: isLoadingProperties } = useQuery<Property[]>({
+  // Add debug logging for authentication
+  const { user } = useAuth();
+  console.log("[Dashboard Debug] Current user:", user);
+
+  const { data: properties, isLoading: isLoadingProperties, error: propertiesError } = useQuery<Property[]>({
     queryKey: ['/api/properties'],
+    onError: (error: Error) => {
+      console.error("[Dashboard Debug] Properties fetch error:", error);
+      toast({
+        title: "Error loading properties",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+    onSuccess: (data) => {
+      console.log("[Dashboard Debug] Properties loaded:", data);
+    }
   });
 
   const { data: applications, isLoading: isLoadingApplications } = useQuery<Application[]>({
@@ -104,6 +109,19 @@ const LandlordDashboard = () => {
         variant: "destructive",
       });
     },
+  });
+
+  const [newProperty, setNewProperty] = useState<NewPropertyFormData>({
+    title: '',
+    description: '',
+    imageUrl: '',
+    address: '',
+    units: '',
+    parkingSpaces: '',
+    requirements: {
+      noEvictions: true,
+      cleanRentalHistory: true
+    }
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
