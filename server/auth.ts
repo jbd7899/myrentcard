@@ -16,6 +16,11 @@ declare global {
 const scryptAsync = promisify(scrypt);
 
 async function hashPassword(password: string) {
+  // Special cases for test accounts
+  if (password === "testlandlord" || password === "testtenant") {
+    return password;
+  }
+
   const salt = randomBytes(16).toString("hex");
   const buf = (await scryptAsync(password, salt, 64)) as Buffer;
   return `${buf.toString("hex")}.${salt}`;
@@ -23,10 +28,8 @@ async function hashPassword(password: string) {
 
 async function comparePasswords(supplied: string, stored: string) {
   // Special cases for test accounts
-  if (stored === "testlandlord" && supplied === "testlandlord") {
-    return true;
-  }
-  if (stored === "testtenant" && supplied === "testtenant") {
+  if ((stored === "testlandlord" && supplied === "testlandlord") ||
+      (stored === "testtenant" && supplied === "testtenant")) {
     return true;
   }
 
@@ -38,23 +41,18 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  // Enhanced session configuration with secure settings
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'development-secret',
-    resave: true, // Changed to true to ensure session is saved
-    saveUninitialized: true, // Changed to true to create session for all requests
+    resave: true,
+    saveUninitialized: true,
     store: storage.sessionStore,
-    name: 'sid', // Set a specific cookie name
     cookie: {
       httpOnly: true,
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
-      sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/'
+      secure: false, // Set to false to work in development
+      maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
   };
 
-  app.set('trust proxy', 1);
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());

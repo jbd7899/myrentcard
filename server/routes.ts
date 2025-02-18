@@ -3,21 +3,10 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertPropertySchema, insertApplicationSchema, insertUserSchema } from "@shared/schema";
-import { scrypt, randomBytes } from "crypto";
-import { promisify } from "util";
-import { sql } from "drizzle-orm";
 import multer from "multer";
 import path from "path";
 import express from 'express';
 import fs from 'fs';
-
-const scryptAsync = promisify(scrypt);
-
-async function hashPassword(password: string) {
-  const salt = randomBytes(16).toString("hex");
-  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
-  return `${buf.toString("hex")}.${salt}`;
-}
 
 // Configure multer for file uploads
 const upload = multer({
@@ -50,7 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("[Debug] Creating test landlord account...");
       await storage.createUser({
         username: "testlandlord",
-        password: await hashPassword("testlandlord"),
+        password: "testlandlord", // For test account, password is stored as-is
         type: "landlord",
         name: "Test Landlord",
         email: "testlandlord@example.com",
@@ -64,7 +53,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.log("[Debug] Creating test tenant account...");
       await storage.createUser({
         username: "testtenant",
-        password: await hashPassword("testtenant"),
+        password: "testtenant", // For test account, password is stored as-is
         type: "tenant",
         name: "Test Tenant",
         email: "testtenant@example.com",
