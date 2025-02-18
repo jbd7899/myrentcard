@@ -5,35 +5,26 @@ import { Plus, Building2, Users, Upload } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import type { Property, PropertyRequirements, Application } from '@shared/schema';
+import type { Property, Application } from '@shared/schema';
 import PropertyAnalytics from './PropertyAnalytics';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { useAuth } from '@/hooks/use-auth'; //Import useAuth
-
-
-interface NewPropertyFormData {
-  title: string;
-  description: string;
-  imageUrl: string;
-  address: string;
-  units: string;
-  parkingSpaces: string;
-  requirements: PropertyRequirements;
-}
+import { useAuth } from '@/hooks/use-auth';
 
 const LandlordDashboard = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const { user } = useAuth();
   const [showAddProperty, setShowAddProperty] = useState(false);
   const [selectedImage, setSelectedImage] = useState<File | null>(null);
 
-  // Add debug logging for authentication
-  const { user } = useAuth();
   console.log("[Dashboard Debug] Current user:", user);
 
-  const { data: properties, isLoading: isLoadingProperties, error: propertiesError } = useQuery<Property[]>({
+  // Only fetch properties if user is authenticated
+  const { data: properties, isLoading: isLoadingProperties, error: propertiesError } = useQuery({
     queryKey: ['/api/properties'],
+    enabled: !!user,
+    retry: 1,
     onError: (error: Error) => {
       console.error("[Dashboard Debug] Properties fetch error:", error);
       toast({
@@ -160,8 +151,16 @@ const LandlordDashboard = () => {
     }
   };
 
-  if (isLoadingProperties || isLoadingApplications) {
+  if (isLoadingProperties) {
     return <div className="p-8">Loading dashboard data...</div>;
+  }
+
+  if (propertiesError) {
+    return (
+      <div className="p-8 text-red-600">
+        Error loading properties: {(propertiesError as Error).message}
+      </div>
+    );
   }
 
   return (
@@ -298,58 +297,60 @@ const LandlordDashboard = () => {
 
       {/* Property List */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {properties?.map((property) => (
-          <Card key={property.id}>
-            <CardHeader>
-              <CardTitle className="text-lg">{property.title}</CardTitle>
-            </CardHeader>
-            <CardContent>
-              {property.imageUrl && (
-                <div className="mb-4">
-                  <img
-                    src={property.imageUrl}
-                    alt={property.title}
-                    className="w-full h-48 object-cover rounded-lg"
-                  />
+        {properties && properties.length > 0 ? (
+          properties.map((property) => (
+            <Card key={property.id}>
+              <CardHeader>
+                <CardTitle className="text-lg">{property.title}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                {property.imageUrl && (
+                  <div className="mb-4">
+                    <img
+                      src={property.imageUrl}
+                      alt={property.title}
+                      className="w-full h-48 object-cover rounded-lg"
+                    />
+                  </div>
+                )}
+                <div className="space-y-4">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Status</span>
+                    <span className={property.status === "Available" ? "text-green-600" : "text-blue-600"}>
+                      {property.status}
+                    </span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Address</span>
+                    <span>{property.address}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Views</span>
+                    <span>{property.pageViews || 0}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Applications</span>
+                    <span>{property.submissionCount || 0}</span>
+                  </div>
+                  <div className="flex space-x-2 pt-4">
+                    <Button variant="outline" className="flex-1">
+                      <Building2 className="w-4 h-4 mr-2" />
+                      Details
+                    </Button>
+                    <Button variant="outline" className="flex-1">
+                      <Users className="w-4 h-4 mr-2" />
+                      Applications
+                    </Button>
+                  </div>
                 </div>
-              )}
-              <div className="space-y-4">
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Status</span>
-                  <span className={property.status === "Available" ? "text-green-600" : "text-blue-600"}>
-                    {property.status}
-                  </span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Units</span>
-                  <span>{property.units} units</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Parking</span>
-                  <span>{property.parkingSpaces} spaces</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Views</span>
-                  <span>{property.pageViews || 0}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Applications</span>
-                  <span>{property.submissionCount || 0}</span>
-                </div>
-                <div className="flex space-x-2 pt-4">
-                  <Button variant="outline" className="flex-1">
-                    <Building2 className="w-4 h-4 mr-2" />
-                    Details
-                  </Button>
-                  <Button variant="outline" className="flex-1">
-                    <Users className="w-4 h-4 mr-2" />
-                    Applications
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
+              </CardContent>
+            </Card>
+          ))
+        ) : (
+          <div className="col-span-full text-center text-gray-500">
+            No properties found. Add your first property to get started!
+          </div>
+        )}
       </div>
     </div>
   );
