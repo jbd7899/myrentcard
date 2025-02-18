@@ -10,11 +10,13 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { z } from "zod";
+import { Link } from "wouter";
 
 // Success page component
 const SuccessPage = ({ formData }: { formData: any }) => {
   const [showAccountForm, setShowAccountForm] = useState(false);
-  const screeningLink = `https://myrentcard.com/apply/${Math.random().toString(36).substr(2, 9)}`;
+  const screeningId = Math.random().toString(36).substr(2, 9);
+  const screeningLink = `/apply/${screeningId}`;
   const { user, registerMutation } = useAuth();
   const { toast } = useToast();
 
@@ -230,9 +232,22 @@ const SuccessPage = ({ formData }: { formData: any }) => {
       <Card className="p-6 mt-8">
         <CardContent>
           <div className="bg-gray-50 p-4 rounded-lg break-all text-center">
-            <p className="font-mono text-gray-800">{screeningLink}</p>
+            <Link href={screeningLink}>
+              <a className="font-mono text-gray-800 hover:text-blue-600 transition-colors">
+                {window.location.origin + screeningLink}
+              </a>
+            </Link>
           </div>
-          <Button className="w-full mt-4">
+          <Button 
+            className="w-full mt-4"
+            onClick={() => {
+              navigator.clipboard.writeText(window.location.origin + screeningLink);
+              toast({
+                title: "Link copied",
+                description: "The screening link has been copied to your clipboard",
+              });
+            }}
+          >
             Copy Link
           </Button>
         </CardContent>

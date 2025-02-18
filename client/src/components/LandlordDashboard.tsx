@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Plus, Building2, Users } from 'lucide-react';
+import { Plus, Building2, Users, Link as LinkIcon } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
@@ -10,6 +10,18 @@ import PropertyAnalytics from './PropertyAnalytics';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
+import { Link } from 'wouter';
+
+interface Property {
+  id: number;
+  title: string;
+  status: string;
+  address: string;
+  pageViews: number;
+  submissionCount: number;
+  imageUrl?: string;
+  screeningId?: string;
+}
 
 interface NewPropertyFormData {
   title: string;
@@ -64,9 +76,9 @@ const LandlordDashboard = () => {
         }
       }
 
-      const response = await apiRequest('POST', '/api/properties', { 
-        ...propertyData, 
-        imageUrl 
+      const response = await apiRequest('POST', '/api/properties', {
+        ...propertyData,
+        imageUrl
       });
       return response.json();
     },
@@ -165,14 +177,25 @@ const LandlordDashboard = () => {
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-semibold">Property Dashboard</h2>
-        <Button
-          onClick={() => setShowAddProperty(true)}
-          className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white"
-          size="lg"
-        >
-          <Plus className="w-4 h-4" />
-          <span>Add New Property</span>
-        </Button>
+        <div className="space-x-4">
+          <Link href="/request-info">
+            <Button
+              className="flex items-center space-x-2 bg-green-600 hover:bg-green-700 text-white"
+              size="lg"
+            >
+              <LinkIcon className="w-4 h-4" />
+              <span>Create Screening Page</span>
+            </Button>
+          </Link>
+          <Button
+            onClick={() => setShowAddProperty(true)}
+            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white"
+            size="lg"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Add New Property</span>
+          </Button>
+        </div>
       </div>
 
       {/* Analytics Section */}
@@ -181,6 +204,38 @@ const LandlordDashboard = () => {
           properties={properties}
           applications={applications}
         />
+      )}
+
+      {/* Screening Pages Section */}
+      {properties && properties.some(p => p.screeningId) && (
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>Active Screening Pages</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {properties
+                .filter(p => p.screeningId)
+                .map((property) => (
+                  <Card key={property.screeningId} className="p-4">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-medium">{property.title}</h3>
+                      <Link href={`/apply/${property.screeningId}`}>
+                        <Button variant="ghost" size="sm">
+                          <LinkIcon className="w-4 h-4 mr-2" />
+                          View
+                        </Button>
+                      </Link>
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      <p>Views: {property.pageViews || 0}</p>
+                      <p>Submissions: {property.submissionCount || 0}</p>
+                    </div>
+                  </Card>
+                ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* Add Property Form */}

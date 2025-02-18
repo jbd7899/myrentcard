@@ -24,6 +24,7 @@ function Router() {
         <Route path="/get-started" component={TenantFlow} />
         <Route path="/request-info" component={LandlordFlow} />
         <Route path="/sample-prescreening" component={SamplePrescreening} />
+        <Route path="/apply/:id" component={SamplePrescreening} />
         <ProtectedRoute path="/landlord" component={LandlordPage} />
         <ProtectedRoute path="/tenant" component={TenantPage} />
         <Route component={NotFound} />
