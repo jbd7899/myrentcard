@@ -73,26 +73,63 @@ export default function Layout({ children }: { children: ReactNode }) {
                 </SheetTrigger>
                 <SheetContent>
                   <div className="flex flex-col gap-6 mt-8">
-                    <Link href="#how-it-works">
+                    <Link href="#how-it-works" onClick={() => {
+                      const sheet = document.querySelector('[data-state="open"]');
+                      if (sheet) {
+                        const closeButton = sheet.querySelector('button[type="button"]');
+                        closeButton?.click();
+                      }
+                    }}>
                       <span className="text-gray-600 hover:text-gray-900 cursor-pointer">How It Works</span>
                     </Link>
-                    <Link href="#benefits">
+                    <Link href="#benefits" onClick={() => {
+                      const sheet = document.querySelector('[data-state="open"]');
+                      if (sheet) {
+                        const closeButton = sheet.querySelector('button[type="button"]');
+                        closeButton?.click();
+                      }
+                    }}>
                       <span className="text-gray-600 hover:text-gray-900 cursor-pointer">Benefits</span>
                     </Link>
-                    <Link href="#testimonials">
+                    <Link href="#testimonials" onClick={() => {
+                      const sheet = document.querySelector('[data-state="open"]');
+                      if (sheet) {
+                        const closeButton = sheet.querySelector('button[type="button"]');
+                        closeButton?.click();
+                      }
+                    }}>
                       <span className="text-gray-600 hover:text-gray-900 cursor-pointer">Testimonials</span>
                     </Link>
-                    <Link href="#faq">
+                    <Link href="#faq" onClick={() => {
+                      const sheet = document.querySelector('[data-state="open"]');
+                      if (sheet) {
+                        const closeButton = sheet.querySelector('button[type="button"]');
+                        closeButton?.click();
+                      }
+                    }}>
                       <span className="text-gray-600 hover:text-gray-900 cursor-pointer">FAQ</span>
                     </Link>
                     {user ? (
                       <>
-                        <Link href={user.type === 'landlord' ? '/landlord' : '/tenant'}>
+                        <Link href={user.type === 'landlord' ? '/landlord' : '/tenant'} onClick={() => {
+                          const sheet = document.querySelector('[data-state="open"]');
+                          if (sheet) {
+                            const closeButton = sheet.querySelector('button[type="button"]');
+                            closeButton?.click();
+                          }
+                        }}>
                           <Button variant="ghost" className="w-full">Dashboard</Button>
                         </Link>
                         <Button 
                           variant="outline" 
-                          onClick={() => logoutMutation.mutate()}
+                          onClick={() => {
+                            const sheet = document.querySelector('[data-state="open"]');
+                            if (sheet) {
+                              const closeButton = sheet.querySelector('button[type="button"]');
+                              closeButton?.click();
+                            }
+                            logoutMutation.mutate();
+                          }}
                           disabled={logoutMutation.isPending}
                           className="w-full"
                         >
@@ -100,7 +137,13 @@ export default function Layout({ children }: { children: ReactNode }) {
                         </Button>
                       </>
                     ) : (
-                      <Link href="/auth" className="w-full">
+                      <Link href="/auth" className="w-full" onClick={() => {
+                        const sheet = document.querySelector('[data-state="open"]');
+                        if (sheet) {
+                          const closeButton = sheet.querySelector('button[type="button"]');
+                          closeButton?.click();
+                        }
+                      }}>
                         <Button className="w-full bg-[#4361ee] hover:bg-[#3a0ca3] text-white">
                           Login
                         </Button>
