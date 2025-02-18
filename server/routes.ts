@@ -26,53 +26,66 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       console.log("[Debug] Created test landlord:", testLandlord);
 
+      // Create test tenant
+      const testTenant = await storage.createUser({
+        username: "testtenant1",
+        password: "test1",
+        type: "tenant",
+        name: "Test Tenant 1",
+        email: "tenant1@example.com",
+        phone: "9876543210"
+      });
+      console.log("[Debug] Created test tenant:", testTenant);
+
       // Create test properties
       const property1 = await storage.createProperty({
+        landlordId: testLandlord.id,
         title: "Luxury Downtown Apartment",
         description: "Modern 2-bedroom apartment in the heart of downtown",
         address: "123 Main St",
         units: 4,
         parkingSpaces: 2,
-        landlordId: testLandlord.id,
-        status: "Available" as const,
+        status: "Available",
         available: true,
         pageViews: 0,
         uniqueVisitors: 0,
-        submissionCount: 0
+        submissionCount: 0,
+        imageUrl: null
       });
 
       const property2 = await storage.createProperty({
+        landlordId: testLandlord.id,
         title: "Suburban Family Home", 
         description: "Spacious 3-bedroom house with garden",
         address: "456 Oak Ave",
         units: 1,
         parkingSpaces: 2,
-        landlordId: testLandlord.id,
-        status: "Available" as const,
+        status: "Available",
         available: true,
         pageViews: 0,
         uniqueVisitors: 0,
-        submissionCount: 0
+        submissionCount: 0,
+        imageUrl: null
       });
 
-      // Create some test applications
+      // Create test applications using the real tenant ID
       const testApplications = [
         {
           propertyId: property1.id,
-          tenantId: 999,
-          status: "pending" as const,
+          tenantId: testTenant.id,
+          status: "pending",
           message: "Interested in moving in next month"
         },
         {
           propertyId: property1.id,
-          tenantId: 998,
-          status: "pending" as const,
+          tenantId: testTenant.id,
+          status: "pending",
           message: "Looking for immediate move-in"
         },
         {
           propertyId: property2.id,
-          tenantId: 997,
-          status: "pending" as const,
+          tenantId: testTenant.id,
+          status: "pending",
           message: "Family of four, excellent rental history"
         }
       ];
@@ -102,11 +115,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     next();
   });
 
-  // Create uploads directory if it doesn't exist
-  if (!fs.existsSync('./uploads')) {
-    fs.mkdirSync('./uploads');
-  }
-
   // Configure multer for file uploads
   const upload = multer({
     storage: multer.diskStorage({
@@ -128,6 +136,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       fileSize: 5 * 1024 * 1024 // 5MB limit
     }
   });
+
+  // Create uploads directory if it doesn't exist
+  if (!fs.existsSync('./uploads')) {
+    fs.mkdirSync('./uploads');
+  }
 
   // Image upload route
   app.post("/api/upload", upload.single('image'), (req, res) => {
@@ -163,23 +176,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/properties", async (req, res) => {
-    console.log("[Property Debug] Request body:", req.body);
-    console.log("[Property Debug] User authentication status:", req.isAuthenticated());
-    console.log("[Property Debug] User:", req.user);
-
     if (!req.isAuthenticated()) {
-      console.log("[Property Debug] Not authenticated");
       return res.sendStatus(401);
     }
 
     if (req.user.type !== "landlord") {
-      console.log("[Property Debug] Not a landlord");
       return res.status(403).json({ message: "Only landlords can create properties" });
     }
 
     const validation = insertPropertySchema.safeParse(req.body);
     if (!validation.success) {
-      console.log("[Property Debug] Validation failed:", validation.error);
       return res.status(400).json(validation.error);
     }
 
@@ -187,12 +193,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const propertyData = {
         ...validation.data,
         landlordId: req.user.id,
-        status: "Available" as const,
+        status: "Available",
         available: true,
         pageViews: 0,
         uniqueVisitors: 0,
-        submissionCount: 0,
-        imageUrl: validation.data.imageUrl || undefined
+        submissionCount: 0
       };
 
       const property = await storage.createProperty(propertyData);
@@ -206,6 +211,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Track property page view
   app.post("/api/properties/:id/view", async (req, res) => {
     const propertyId = parseInt(req.params.id);
+    if (!propertyId) {
+      return res.status(400).json({ message: "Invalid property ID" });
+    }
+
     await storage.incrementPropertyViews(propertyId);
     res.sendStatus(200);
   });
@@ -238,17 +247,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json(validation.error);
     }
 
-    const application = await storage.createApplication({
-      ...validation.data,
-      tenantId: req.user.id,
-      status: "pending",
-      message: validation.data.message || undefined
-    });
+    try {
+      const application = await storage.createApplication({
+        ...validation.data,
+        tenantId: req.user.id,
+        status: "pending",
+        message: validation.data.message || null
+      });
 
-    // Increment submission count for the property
-    await storage.incrementPropertySubmissions(validation.data.propertyId);
+      // Increment submission count for the property
+      await storage.incrementPropertySubmissions(validation.data.propertyId);
 
-    res.status(201).json(application);
+      res.status(201).json(application);
+    } catch (error) {
+      console.error("Failed to create application:", error);
+      res.status(500).json({ message: "Failed to create application" });
+    }
   });
 
   app.patch("/api/applications/bulk", async (req, res) => {
