@@ -2,65 +2,40 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
-import { insertPropertySchema, insertApplicationSchema, insertUserSchema } from "@shared/schema";
+import { insertPropertySchema, insertApplicationSchema } from "@shared/schema";
 import multer from "multer";
 import path from "path";
 import express from 'express';
 import fs from 'fs';
 
-// Configure multer for file uploads
-const upload = multer({
-  storage: multer.diskStorage({
-    destination: "./uploads",
-    filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, uniqueSuffix + path.extname(file.originalname));
-    }
-  }),
-  fileFilter: (req, file, cb) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    if (allowedTypes.includes(file.mimetype)) {
-      cb(null, true);
-    } else {
-      cb(new Error('Invalid file type'));
-    }
-  },
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB limit
-  }
-});
-
 export async function registerRoutes(app: Express): Promise<Server> {
   try {
-    // Create test accounts if they don't exist
-    console.log("[Debug] Creating test accounts...");
-    const testLandlord = await storage.getUserByUsername("testlandlord");
-    if (!testLandlord) {
-      console.log("[Debug] Creating test landlord account...");
-      await storage.createUser({
-        username: "testlandlord",
-        password: "testlandlord", // For test account, password is stored as-is
-        type: "landlord",
-        name: "Test Landlord",
-        email: "testlandlord@example.com",
-        phone: "1234567890"
-      });
-      console.log("[Debug] Test landlord account created successfully");
-    }
+    // Clear existing test accounts first
+    await storage.clearTestAccounts();
 
-    const testTenant = await storage.getUserByUsername("testtenant");
-    if (!testTenant) {
-      console.log("[Debug] Creating test tenant account...");
-      await storage.createUser({
-        username: "testtenant",
-        password: "testtenant", // For test account, password is stored as-is
-        type: "tenant",
-        name: "Test Tenant",
-        email: "testtenant@example.com",
-        phone: "0987654321"
-      });
-      console.log("[Debug] Test tenant account created successfully");
-    }
+    // Create fresh test accounts
+    console.log("[Debug] Creating test accounts...");
+
+    const testLandlord = await storage.createUser({
+      username: "testlandlord",
+      password: "testlandlord",
+      type: "landlord",
+      name: "Test Landlord",
+      email: "testlandlord@example.com",
+      phone: "1234567890"
+    });
+    console.log("[Debug] Created test landlord:", testLandlord);
+
+    const testTenant = await storage.createUser({
+      username: "testtenant",
+      password: "testtenant",
+      type: "tenant",
+      name: "Test Tenant",
+      email: "testtenant@example.com",
+      phone: "0987654321"
+    });
+    console.log("[Debug] Created test tenant:", testTenant);
+
   } catch (error) {
     console.error("[Debug] Error creating test accounts:", error);
   }
@@ -81,6 +56,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   if (!fs.existsSync('./uploads')) {
     fs.mkdirSync('./uploads');
   }
+
+  // Configure multer for file uploads
+  const upload = multer({
+    storage: multer.diskStorage({
+      destination: "./uploads",
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, uniqueSuffix + path.extname(file.originalname));
+      }
+    }),
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (allowedTypes.includes(file.mimetype)) {
+        cb(null, true);
+      } else {
+        cb(new Error('Invalid file type'));
+      }
+    },
+    limits: {
+      fileSize: 5 * 1024 * 1024 // 5MB limit
+    }
+  });
 
   // Image upload route
   app.post("/api/upload", upload.single('image'), (req, res) => {

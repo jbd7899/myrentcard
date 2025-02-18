@@ -17,6 +17,7 @@ export interface IStorage {
   getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
+  clearTestAccounts(): Promise<void>; // Added function
   // Property operations
   createProperty(property: Omit<Property, "id" | "createdAt">): Promise<Property>;
   getAllProperties(): Promise<Property[]>;
@@ -108,9 +109,9 @@ export class ReplitStorage implements IStorage {
       for (const key of keyArray) {
         const result = await db.get(key);
         if (
-          result && 
-          typeof result === 'object' && 
-          'username' in result && 
+          result &&
+          typeof result === 'object' &&
+          'username' in result &&
           result.username === username
         ) {
           return result as User;
@@ -133,6 +134,26 @@ export class ReplitStorage implements IStorage {
     await db.set(`${USERS_PREFIX}${id}`, user);
     return user;
   }
+
+  async clearTestAccounts(): Promise<void> {
+    try {
+      const keys = await db.list(USERS_PREFIX);
+      const keyArray = Array.isArray(keys) ? keys : [];
+
+      for (const key of keyArray) {
+        const user = await db.get(key);
+        if (user &&
+            typeof user === 'object' &&
+            'username' in user &&
+            (user.username === 'testlandlord' || user.username === 'testtenant')) {
+          await db.delete(key);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to clear test accounts:', error);
+    }
+  }
+
 
   // Property operations with proper type handling
   async createProperty(insertProperty: Omit<Property, "id" | "createdAt">): Promise<Property> {
@@ -233,9 +254,9 @@ export class ReplitStorage implements IStorage {
           try {
             const result = await db.get(key);
             if (
-              result && 
-              typeof result === 'object' && 
-              'tenantId' in result && 
+              result &&
+              typeof result === 'object' &&
+              'tenantId' in result &&
               result.tenantId === tenantId
             ) {
               return result as Application;
@@ -265,9 +286,9 @@ export class ReplitStorage implements IStorage {
           try {
             const result = await db.get(key);
             if (
-              result && 
-              typeof result === 'object' && 
-              'landlordId' in result && 
+              result &&
+              typeof result === 'object' &&
+              'landlordId' in result &&
               result.landlordId === landlordId
             ) {
               return result as Property;
@@ -292,9 +313,9 @@ export class ReplitStorage implements IStorage {
           try {
             const result = await db.get(key);
             if (
-              result && 
-              typeof result === 'object' && 
-              'propertyId' in result && 
+              result &&
+              typeof result === 'object' &&
+              'propertyId' in result &&
               landlordPropertyIds.includes(result.propertyId)
             ) {
               return result as Application;
