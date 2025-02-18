@@ -27,19 +27,12 @@ function Router() {
         <Route path="/get-started" component={TenantFlow} />
         <Route path="/request-info" component={LandlordFlow} />
         <Route path="/sample-prescreening" component={SamplePrescreening} />
-        <Route path="/apply/:id" component={SamplePrescreening} />
         <ProtectedRoute path="/landlord" component={LandlordPage} />
         <ProtectedRoute path="/tenant" component={TenantPage} />
-        <ProtectedRoute path="/qr-code/general" component={QRCodePage} />
-        <ProtectedRoute path="/qr-code/property-:id" component={QRCodePage} />
-        <ProtectedRoute path="/edit-screening/general" component={EditScreeningPage} />
-        <ProtectedRoute path="/edit-screening/property/:id" component={EditScreeningPage} />
-        <ProtectedRoute path="/analytics/general" component={AnalyticsPage} />
-        <ProtectedRoute path="/analytics/property/:id" component={AnalyticsPage} />
-        <Route path="/screening/:urlId" component={SamplePrescreening} />
         <ProtectedRoute path="/qr-code/:urlId" component={QRCodePage} />
         <ProtectedRoute path="/edit-screening/:urlId" component={EditScreeningPage} />
         <ProtectedRoute path="/analytics/:urlId" component={AnalyticsPage} />
+        <Route path="/screening/:urlId" component={SamplePrescreening} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
