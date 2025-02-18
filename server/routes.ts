@@ -20,7 +20,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         username: "test1",
         password: "test1",
         type: "landlord",
-        name: "Test Landlord 1",
+        name: "Test Landlord 1", 
         email: "test1@example.com",
         phone: "1234567890"
       });
@@ -35,18 +35,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
         parkingSpaces: 2,
         landlordId: testLandlord.id,
         status: "Available" as const,
-        available: true
+        available: true,
+        pageViews: 0,
+        uniqueVisitors: 0,
+        submissionCount: 0
       });
 
       const property2 = await storage.createProperty({
-        title: "Suburban Family Home",
+        title: "Suburban Family Home", 
         description: "Spacious 3-bedroom house with garden",
         address: "456 Oak Ave",
         units: 1,
         parkingSpaces: 2,
         landlordId: testLandlord.id,
         status: "Available" as const,
-        available: true
+        available: true,
+        pageViews: 0,
+        uniqueVisitors: 0,
+        submissionCount: 0
       });
 
       // Create some test applications
@@ -178,7 +184,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
 
     try {
-      // Ensure imageUrl is either a string or null before creating property
       const propertyData = {
         ...validation.data,
         landlordId: req.user.id,
@@ -187,7 +192,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         pageViews: 0,
         uniqueVisitors: 0,
         submissionCount: 0,
-        imageUrl: validation.data.imageUrl || null // Ensure imageUrl is properly handled
+        imageUrl: validation.data.imageUrl || undefined
       };
 
       const property = await storage.createProperty(propertyData);
@@ -197,7 +202,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ message: "Failed to create property" });
     }
   });
-
 
   // Track property page view
   app.post("/api/properties/:id/view", async (req, res) => {
@@ -238,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       ...validation.data,
       tenantId: req.user.id,
       status: "pending",
-      message: validation.data.message || null
+      message: validation.data.message || undefined
     });
 
     // Increment submission count for the property
@@ -247,7 +251,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(201).json(application);
   });
 
-  // Add this to the registerRoutes function, before return httpServer
   app.patch("/api/applications/bulk", async (req, res) => {
     if (!req.isAuthenticated() || req.user.type !== "landlord") {
       return res.sendStatus(403);
