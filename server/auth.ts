@@ -16,7 +16,9 @@ export function setupAuth(app: Express) {
   // Enable CORS with credentials
   app.use(cors({
     origin: true,
-    credentials: true
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
   }));
 
   const isDevelopment = process.env.NODE_ENV !== 'production';
@@ -24,17 +26,18 @@ export function setupAuth(app: Express) {
 
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'development-secret',
-    resave: true, // Changed to true to ensure session is saved back to store
-    saveUninitialized: true, // Changed to true to ensure session is always created
+    resave: false,
+    saveUninitialized: false,
     store: storage.sessionStore,
-    name: 'rentcard.sid', // Custom cookie name
+    name: 'rentcard.sid',
+    proxy: true, // Trust the reverse proxy
     cookie: {
       httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
-      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-    },
-    rolling: true // Extends the session expiry on each request
+      secure: 'auto', // Let Express determine based on connection
+      sameSite: 'none',
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+      domain: process.env.NODE_ENV === 'production' ? '.myrentcard.com' : undefined
+    }
   };
 
   // Debug session configuration
@@ -43,6 +46,8 @@ export function setupAuth(app: Express) {
     secret: '[REDACTED]',
     store: '[SessionStore]'
   });
+
+  app.set('trust proxy', 1); // Trust first proxy
 
   app.use(session(sessionSettings));
   app.use(passport.initialize());
@@ -144,6 +149,7 @@ export function setupAuth(app: Express) {
   app.post("/api/login", (req, res, next) => {
     console.log('[Auth Debug] Login attempt:', { username: req.body.username });
     console.log('[Auth Debug] Session before login:', req.session);
+    console.log('[Auth Debug] Headers:', req.headers);
 
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
@@ -161,9 +167,6 @@ export function setupAuth(app: Express) {
         }
         console.log("[Auth Debug] Login successful for user:", user.id);
         console.log('[Auth Debug] Session after login:', req.session);
-
-        // Set a custom header to indicate successful authentication
-        res.setHeader('X-Authentication-Status', 'success');
         res.status(200).json(user);
       });
     })(req, res, next);
@@ -171,11 +174,20 @@ export function setupAuth(app: Express) {
 
   app.post("/api/logout", (req, res, next) => {
     console.log("[Auth Debug] Logging out user:", req.user?.id);
+    console.log("[Auth Debug] Session before logout:", req.session);
+
     req.logout((err) => {
       if (err) return next(err);
       req.session.destroy((err) => {
         if (err) return next(err);
-        res.clearCookie('rentcard.sid');
+        res.clearCookie('rentcard.sid', {
+          domain: process.env.NODE_ENV === 'production' ? '.myrentcard.com' : undefined,
+          path: '/',
+          httpOnly: true,
+          secure: true,
+          sameSite: 'none'
+        });
+        console.log("[Auth Debug] Logout successful, session destroyed");
         res.sendStatus(200);
       });
     });
@@ -185,7 +197,7 @@ export function setupAuth(app: Express) {
     console.log('[Auth Debug] User check request');
     console.log('[Auth Debug] Session:', req.session);
     console.log('[Auth Debug] isAuthenticated:', req.isAuthenticated());
-    console.log('[Auth Debug] Cookie:', req.headers.cookie);
+    console.log('[Auth Debug] Headers:', req.headers);
 
     if (!req.isAuthenticated()) {
       console.log("[Auth Debug] Unauthenticated user access attempt");
