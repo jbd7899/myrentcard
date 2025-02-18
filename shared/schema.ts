@@ -49,6 +49,7 @@ export const screeningPages = pgTable('screening_pages', {
   landlordId: integer('landlord_id').notNull().references(() => users.id),
   propertyId: integer('property_id').references(() => properties.id),
   type: varchar('type', { length: 50 }).notNull().default('property'), // 'general' or 'property'
+  urlId: varchar('url_id', { length: 64 }).notNull().unique(), // Added for random URL generation
   title: varchar('title', { length: 255 }).notNull(),
   description: text('description'),
   customFields: jsonb('custom_fields').notNull(),
@@ -115,17 +116,18 @@ export const customFieldSchema = z.object({
   }).optional()
 });
 
-export const insertScreeningPageSchema = createInsertSchema(screeningPages).omit({
+export const insertScreeningPageSchema = createInsertSchema(screeningPages, {
+  type: z.enum(["general", "property"]),
+  urlId: z.string().length(64),
+  customFields: z.array(customFieldSchema),
+  branding: brandingSchema
+}).omit({
   id: true,
   createdAt: true,
   updatedAt: true,
   views: true,
   uniqueVisitors: true,
   submissionCount: true
-}).extend({
-  type: z.enum(["general", "property"]),
-  customFields: z.array(customFieldSchema),
-  branding: brandingSchema
 });
 
 export const insertScreeningSubmissionSchema = createInsertSchema(screeningSubmissions).omit({

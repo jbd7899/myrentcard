@@ -36,6 +36,10 @@ function Router() {
         <ProtectedRoute path="/edit-screening/property/:id" component={EditScreeningPage} />
         <ProtectedRoute path="/analytics/general" component={AnalyticsPage} />
         <ProtectedRoute path="/analytics/property/:id" component={AnalyticsPage} />
+        <Route path="/screening/:urlId" component={SamplePrescreening} />
+        <ProtectedRoute path="/qr-code/:urlId" component={QRCodePage} />
+        <ProtectedRoute path="/edit-screening/:urlId" component={EditScreeningPage} />
+        <ProtectedRoute path="/analytics/:urlId" component={AnalyticsPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>

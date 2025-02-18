@@ -7,6 +7,12 @@ import path from "path";
 import express from 'express';
 import fs from 'fs';
 import { insertPropertySchema, insertApplicationSchema, insertScreeningPageSchema, insertScreeningSubmissionSchema } from "@shared/schema";
+import crypto from 'crypto';
+
+// Add helper function for generating random URL IDs
+function generateUrlId(): string {
+  return crypto.randomBytes(32).toString('hex');
+}
 
 export async function registerRoutes(app: Express): Promise<Server> {
   try {
@@ -313,7 +319,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.sendStatus(403);
     }
 
-    const validation = insertScreeningPageSchema.safeParse(req.body);
+    const validation = insertScreeningPageSchema.safeParse({
+      ...req.body,
+      urlId: generateUrlId(), // Generate random URL ID
+    });
+
     if (!validation.success) {
       return res.status(400).json(validation.error);
     }
@@ -327,6 +337,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to create screening page:", error);
       res.status(500).json({ message: "Failed to create screening page" });
+    }
+  });
+
+  // Add route for accessing screening pages by URL ID
+  app.get("/api/screening/:urlId", async (req, res) => {
+    try {
+      const page = await storage.getScreeningPageByUrlId(req.params.urlId);
+      if (!page) {
+        return res.status(404).json({ message: "Screening page not found" });
+      }
+      res.json(page);
+    } catch (error) {
+      console.error("Failed to fetch screening page:", error);
+      res.status(500).json({ message: "Failed to fetch screening page" });
     }
   });
 

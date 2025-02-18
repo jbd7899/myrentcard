@@ -39,6 +39,7 @@ export interface IStorage {
   // Password operations
   hashPassword(password: string): Promise<string>;
   comparePasswords(supplied: string, stored: string): Promise<boolean>;
+  getScreeningPageByUrlId(urlId: string): Promise<ScreeningPage | undefined>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -216,6 +217,13 @@ export class DatabaseStorage implements IStorage {
     }
     // Use the existing implementation from auth.ts
     return supplied === stored;
+  }
+  async getScreeningPageByUrlId(urlId: string): Promise<ScreeningPage | undefined> {
+    const [page] = await db
+      .select()
+      .from(screeningPages)
+      .where(eq(screeningPages.urlId, urlId));
+    return page;
   }
 }
 
