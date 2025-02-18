@@ -29,6 +29,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!existingTestUser) {
       console.log("[Debug] No test account found, creating test accounts...");
 
+
+  // Health check endpoint
+  app.get("/", (_req, res) => {
+    res.status(200).json({ status: "ok" });
+  });
+
+
       // Create test landlord account
       const testLandlord = await storage.createUser({
         username: "landlordtest",
