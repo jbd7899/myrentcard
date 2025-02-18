@@ -5,21 +5,16 @@ import { Plus, Building2, Users, Link as LinkIcon } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiRequest } from '@/lib/queryClient';
 import { useToast } from '@/hooks/use-toast';
-import type { Property, Application } from '@shared/schema';
-import PropertyAnalytics from './PropertyAnalytics';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuth } from '@/hooks/use-auth';
 import { Link } from 'wouter';
+import type { Property as SchemaProperty, Application } from '@shared/schema';
 
-interface Property {
-  id: number;
-  title: string;
-  status: string;
-  address: string;
-  pageViews: number;
-  submissionCount: number;
-  imageUrl?: string;
+// Extend the Property type to include UI-specific fields
+interface Property extends SchemaProperty {
+  pageViews?: number;
+  submissionCount?: number;
   screeningId?: string;
 }
 
@@ -47,15 +42,15 @@ const LandlordDashboard = () => {
   const { data: properties, isLoading: isLoadingProperties, error: propertiesError } = useQuery<Property[]>({
     queryKey: ['/api/properties'],
     enabled: !!user,
-    retry: 1
   });
 
   const { data: applications, isLoading: isLoadingApplications } = useQuery<Application[]>({
     queryKey: ['/api/applications'],
+    enabled: !!user,
   });
 
   const createPropertyMutation = useMutation({
-    mutationFn: async (propertyData: Omit<Property, 'id' | 'createdAt' | 'pageViews' | 'uniqueVisitors' | 'submissionCount'>) => {
+    mutationFn: async (propertyData: Omit<Property, 'id' | 'createdAt'>) => {
       let imageUrl = null;
       if (selectedImage) {
         const formData = new FormData();
