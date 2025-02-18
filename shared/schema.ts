@@ -33,6 +33,29 @@ export const properties = pgTable('properties', {
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
+// RentCard table definition
+export const rentCards = pgTable('rent_cards', {
+  id: serial('id').primaryKey(),
+  tenantId: integer('tenant_id').notNull().references(() => users.id),
+  name: varchar('name', { length: 255 }).notNull(),
+  urlId: varchar('url_id', { length: 64 }).notNull().unique(),
+  views: integer('views').default(0).notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull(),
+  updatedAt: timestamp('updated_at').defaultNow().notNull()
+});
+
+// RentalReferences table definition (renamed from references)
+export const rentalReferences = pgTable('rental_references', {
+  id: serial('id').primaryKey(),
+  applicationId: integer('application_id').notNull().references(() => applications.id),
+  landlordName: varchar('landlord_name', { length: 255 }).notNull(),
+  propertyAddress: varchar('property_address', { length: 255 }).notNull(),
+  comment: text('comment'),
+  status: varchar('status', { length: 50 }).$type<'pending' | 'verified'>().notNull(),
+  createdAt: timestamp('created_at').defaultNow().notNull()
+});
+
+
 // Application table definition with proper status typing
 export const applications = pgTable('applications', {
   id: serial('id').primaryKey(),
@@ -40,6 +63,9 @@ export const applications = pgTable('applications', {
   tenantId: integer('tenant_id').notNull().references(() => users.id),
   status: varchar('status', { length: 50 }).$type<'pending' | 'approved' | 'rejected'>().notNull(),
   message: text('message'),
+  propertyName: varchar('property_name', { length: 255 }),
+  propertyLocation: varchar('property_location', { length: 255 }),
+  views: integer('views').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -137,6 +163,21 @@ export const insertScreeningSubmissionSchema = createInsertSchema(screeningSubmi
   status: z.enum(["pending", "approved", "rejected"])
 });
 
+// Add RentCard schemas
+export const insertRentCardSchema = createInsertSchema(rentCards).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+  views: true
+});
+
+export const insertRentalReferenceSchema = createInsertSchema(rentalReferences).omit({
+  id: true,
+  createdAt: true
+}).extend({
+  status: z.enum(["pending", "verified"])
+});
+
 // Export inferred types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -155,3 +196,9 @@ export const propertyRequirementsSchema = z.object({
 });
 
 export type PropertyRequirements = z.infer<typeof propertyRequirementsSchema>;
+
+// Add new type exports
+export type RentCard = typeof rentCards.$inferSelect;
+export type InsertRentCard = z.infer<typeof insertRentCardSchema>;
+export type RentalReference = typeof rentalReferences.$inferSelect;
+export type InsertRentalReference = z.infer<typeof insertRentalReferenceSchema>;

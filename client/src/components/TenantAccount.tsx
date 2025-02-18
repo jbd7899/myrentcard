@@ -4,9 +4,10 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Clock, Mail, Phone, Edit2, Share2, Eye, ExternalLink, Plus, Link as LinkIcon } from 'lucide-react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import type { Application, RentCard } from '@shared/schema';
+import type { Application, RentCard, RentalReference } from '@shared/schema';
 import { useAuth } from '@/hooks/use-auth';
 import { useToast } from '@/hooks/use-toast';
+import { queryClient } from '@/lib/queryClient';
 
 const TenantAccount = () => {
   const [activeTab, setActiveTab] = useState('profile');
@@ -15,8 +16,8 @@ const TenantAccount = () => {
   const [newRentCardName, setNewRentCardName] = useState('');
   const [showNewRentCardForm, setShowNewRentCardForm] = useState(false);
 
-  // Fetch applications
-  const { data: applications, isLoading: applicationsLoading } = useQuery<Application[]>({
+  // Fetch applications with references
+  const { data: applications, isLoading: applicationsLoading } = useQuery<(Application & { references?: RentalReference[] })[]>({
     queryKey: ['/api/applications'],
     retry: 3,
   });
@@ -39,6 +40,7 @@ const TenantAccount = () => {
       return response.json();
     },
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/rentcards'] });
       toast({
         title: "Success",
         description: "New RentCard created successfully",
