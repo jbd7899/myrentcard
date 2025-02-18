@@ -22,8 +22,11 @@ async function hashPassword(password: string) {
 }
 
 async function comparePasswords(supplied: string, stored: string) {
-  // Special case for test account
+  // Special cases for test accounts
   if (stored === "testlandlord" && supplied === "testlandlord") {
+    return true;
+  }
+  if (stored === "testtenant" && supplied === "testtenant") {
     return true;
   }
 
