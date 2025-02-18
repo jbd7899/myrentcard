@@ -16,15 +16,21 @@ const TenantAccount = () => {
   const [newRentCardName, setNewRentCardName] = useState('');
   const [showNewRentCardForm, setShowNewRentCardForm] = useState(false);
 
-  // Fetch applications with references
-  const { data: applications, isLoading: applicationsLoading } = useQuery<(Application & { references?: RentalReference[] })[]>({
+  // Update query to include references
+  const { data: applications, isLoading: applicationsLoading } = useQuery<Application[]>({
     queryKey: ['/api/applications'],
     retry: 3,
   });
 
-  // Fetch rent cards
+  // Update RentCards query
   const { data: rentCards, isLoading: rentCardsLoading } = useQuery<RentCard[]>({
     queryKey: ['/api/rentcards'],
+    retry: 3,
+  });
+
+  // Get references
+  const { data: references, isLoading: referencesLoading } = useQuery<RentalReference[]>({
+    queryKey: ['/api/references'],
     retry: 3,
   });
 
@@ -176,24 +182,30 @@ const TenantAccount = () => {
               )}
 
               <div className="space-y-4">
-                {rentCards?.map((card, index) => (
-                  <div key={index} className="flex items-center justify-between p-4 bg-white border rounded-lg">
-                    <div>
-                      <h3 className="font-medium">{card.name}</h3>
-                      <p className="text-sm text-gray-600">Created: {new Date(card.createdAt).toLocaleDateString()}</p>
+                {rentCards && rentCards.length > 0 ? (
+                  rentCards.map((card, index) => (
+                    <div key={index} className="flex items-center justify-between p-4 bg-white border rounded-lg">
+                      <div>
+                        <h3 className="font-medium">{card.name}</h3>
+                        <p className="text-sm text-gray-600">Created: {new Date(card.createdAt).toLocaleDateString()}</p>
+                      </div>
+                      <div className="flex space-x-2">
+                        <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                          <Eye className="w-4 h-4" />
+                          <span>Views: {card.views}</span>
+                        </Button>
+                        <Button variant="outline" size="sm" className="flex items-center space-x-2">
+                          <LinkIcon className="w-4 h-4" />
+                          <span>Share</span>
+                        </Button>
+                      </div>
                     </div>
-                    <div className="flex space-x-2">
-                      <Button variant="outline" size="sm" className="flex items-center space-x-2">
-                        <Eye className="w-4 h-4" />
-                        <span>Views: {card.views}</span>
-                      </Button>
-                      <Button variant="outline" size="sm" className="flex items-center space-x-2">
-                        <LinkIcon className="w-4 h-4" />
-                        <span>Share</span>
-                      </Button>
-                    </div>
+                  ))
+                ) : (
+                  <div className="bg-gray-50 p-4 rounded-lg text-center">
+                    <p className="text-gray-600">No RentCards created yet. Create your first RentCard to start sharing with landlords.</p>
                   </div>
-                ))}
+                )}
               </div>
             </CardContent>
           </Card>
@@ -283,32 +295,30 @@ const TenantAccount = () => {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                {!applications?.some(app => app.references?.length > 0) ? (
+                {references && references.length > 0 ? (
+                  references.map((ref, index) => (
+                    <div key={index} className="border rounded-lg p-4">
+                      <div className="flex justify-between items-start mb-2">
+                        <div>
+                          <h4 className="font-medium">{ref.landlordName}</h4>
+                          <p className="text-sm text-gray-600">{ref.propertyAddress}</p>
+                        </div>
+                        <span className={`px-2 py-1 rounded-full text-sm ${
+                          ref.status === 'verified' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {ref.status}
+                        </span>
+                      </div>
+                      <p className="text-sm mt-2">{ref.comment}</p>
+                      <div className="mt-2 text-sm text-gray-600">
+                        Received: {new Date(ref.createdAt).toLocaleDateString()}
+                      </div>
+                    </div>
+                  ))
+                ) : (
                   <div className="bg-gray-50 p-4 rounded-lg text-center">
                     <p className="text-gray-600">No references collected yet. Request references from your previous landlords to build your rental history.</p>
                   </div>
-                ) : (
-                  applications?.map((app, index) => (
-                    app.references?.map((ref, refIndex) => (
-                      <div key={`${index}-${refIndex}`} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-2">
-                          <div>
-                            <h4 className="font-medium">{ref.landlordName}</h4>
-                            <p className="text-sm text-gray-600">{ref.propertyAddress}</p>
-                          </div>
-                          <span className={`px-2 py-1 rounded-full text-sm ${
-                            ref.status === 'verified' ? 'bg-green-100 text-green-800' : 'bg-yellow-100 text-yellow-800'
-                          }`}>
-                            {ref.status}
-                          </span>
-                        </div>
-                        <p className="text-sm mt-2">{ref.comment}</p>
-                        <div className="mt-2 text-sm text-gray-600">
-                          Received: {new Date(ref.createdAt).toLocaleDateString()}
-                        </div>
-                      </div>
-                    ))
-                  ))
                 )}
               </div>
             </CardContent>

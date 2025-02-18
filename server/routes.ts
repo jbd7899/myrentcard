@@ -6,7 +6,7 @@ import multer from "multer";
 import path from "path";
 import express from 'express';
 import fs from 'fs';
-import { insertPropertySchema, insertApplicationSchema, insertScreeningPageSchema, insertScreeningSubmissionSchema } from "@shared/schema";
+import { insertPropertySchema, insertApplicationSchema, insertScreeningPageSchema, insertScreeningSubmissionSchema, insertRentCardSchema, insertRentalReferenceSchema } from "@shared/schema";
 import crypto from 'crypto';
 
 // Helper function for generating random URL IDs
@@ -566,6 +566,92 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Failed to update submission status:", error);
       res.status(500).json({ message: "Failed to update submission status" });
+    }
+  });
+
+  // RentCard routes
+  app.get("/api/rentcards", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const rentCards = await storage.getRentCards(req.user.id);
+      res.json(rentCards);
+    } catch (error) {
+      console.error("Failed to fetch RentCards:", error);
+      res.status(500).json({ message: "Failed to fetch RentCards" });
+    }
+  });
+
+  app.post("/api/rentcards", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    const validation = insertRentCardSchema.safeParse({
+      ...req.body,
+      tenantId: req.user.id,
+      urlId: generateUrlId(), // Generate random URL ID for the RentCard
+      views: 0
+    });
+
+    if (!validation.success) {
+      return res.status(400).json(validation.error);
+    }
+
+    try {
+      const rentCard = await storage.createRentCard(validation.data);
+      res.status(201).json(rentCard);
+    } catch (error) {
+      console.error("Failed to create RentCard:", error);
+      res.status(500).json({ message: "Failed to create RentCard" });
+    }
+  });
+
+  // Reference routes
+  app.get("/api/references", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    try {
+      const references = await storage.getRentalReferences(req.user.id);
+      res.json(references);
+    } catch (error) {
+      console.error("Failed to fetch references:", error);
+      res.status(500).json({ message: "Failed to fetch references" });
+    }
+  });
+
+  app.post("/api/references/request", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({ message: "Email is required" });
+    }
+
+    try {
+      // Create a pending reference request
+      const reference = await storage.createRentalReference({
+        tenantId: req.user.id,
+        landlordEmail: email,
+        status: "pending",
+        // Other fields will be filled when landlord responds
+        landlordName: null,
+        propertyAddress: null,
+        comment: null
+      });
+
+      // In a real app, we would send an email to the landlord here
+      // For now, we'll just return success
+      res.status(201).json(reference);
+    } catch (error) {
+      console.error("Failed to create reference request:", error);
+      res.status(500).json({ message: "Failed to create reference request" });
     }
   });
 
