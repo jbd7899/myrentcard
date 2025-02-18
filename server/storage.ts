@@ -28,6 +28,8 @@ export interface IStorage {
   createApplication(application: Omit<Application, "id" | "createdAt">): Promise<Application>;
   getTenantApplications(tenantId: number): Promise<Application[]>;
   getLandlordApplications(landlordId: number): Promise<Application[]>;
+  // Add new method for bulk application updates
+  bulkUpdateApplications(applicationIds: number[], status: 'approved' | 'rejected'): Promise<void>;
 }
 
 export class ReplitStorage implements IStorage {
@@ -331,6 +333,24 @@ export class ReplitStorage implements IStorage {
     } catch (error) {
       console.error('Failed to get landlord applications:', error);
       return [];
+    }
+  }
+
+  async bulkUpdateApplications(applicationIds: number[], status: 'approved' | 'rejected'): Promise<void> {
+    try {
+      for (const id of applicationIds) {
+        const key = `${APPLICATIONS_PREFIX}${id}`;
+        const application = await db.get(key);
+        if (application && typeof application === 'object' && 'id' in application) {
+          await db.set(key, {
+            ...application,
+            status
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Failed to bulk update applications:', error);
+      throw new Error('Failed to update applications');
     }
   }
 }

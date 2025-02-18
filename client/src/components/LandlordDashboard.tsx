@@ -3,8 +3,49 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link as LinkIcon } from 'lucide-react';
 import { Link } from 'wouter';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useToast } from '@/hooks/use-toast';
+import { apiRequest } from '@/lib/queryClient';
+import BulkApplicationManager from './BulkApplicationManager';
 
 const LandlordDashboard = () => {
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  // Fetch applications and properties
+  const { data: applications } = useQuery({
+    queryKey: ['/api/applications'],
+  });
+
+  const { data: properties } = useQuery({
+    queryKey: ['/api/properties'],
+  });
+
+  // Mutation for bulk updating applications
+  const updateApplicationsMutation = useMutation({
+    mutationFn: async ({ applicationIds, status }: { applicationIds: number[], status: 'approved' | 'rejected' }) => {
+      const response = await apiRequest('PATCH', '/api/applications/bulk', {
+        applicationIds,
+        status,
+      });
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: "Failed to update applications: " + error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleUpdateApplications = async (applicationIds: number[], status: 'approved' | 'rejected') => {
+    await updateApplicationsMutation.mutateAsync({ applicationIds, status });
+  };
+
   return (
     <div className="space-y-6 p-6">
       <div className="flex justify-between items-center">
@@ -47,6 +88,15 @@ const LandlordDashboard = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Bulk Application Manager */}
+      {applications && properties && (
+        <BulkApplicationManager
+          applications={applications}
+          properties={properties}
+          onUpdateApplications={handleUpdateApplications}
+        />
+      )}
     </div>
   );
 };

@@ -203,6 +203,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.status(201).json(application);
   });
 
+  // Add this to the registerRoutes function, before return httpServer
+  app.patch("/api/applications/bulk", async (req, res) => {
+    if (!req.isAuthenticated() || req.user.type !== "landlord") {
+      return res.sendStatus(403);
+    }
+
+    const { applicationIds, status } = req.body;
+
+    if (!Array.isArray(applicationIds) || !["approved", "rejected"].includes(status)) {
+      return res.status(400).json({ message: "Invalid request format" });
+    }
+
+    try {
+      await storage.bulkUpdateApplications(applicationIds, status);
+      res.sendStatus(200);
+    } catch (error) {
+      console.error("Failed to update applications:", error);
+      res.status(500).json({ message: "Failed to update applications" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
