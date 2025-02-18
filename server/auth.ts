@@ -15,22 +15,7 @@ declare global {
 export function setupAuth(app: Express) {
   // Enable CORS with credentials
   app.use(cors({
-    origin: function(origin, callback) {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      if(!origin) return callback(null, true);
-      
-      const allowedOrigins = [
-        'https://myrentcard.com',
-        'http://myrentcard.com',
-        process.env.NODE_ENV === 'development' ? 'http://localhost:5000' : undefined
-      ].filter(Boolean);
-      
-      if(allowedOrigins.indexOf(origin) !== -1 || origin.endsWith('.replit.app')){
-        callback(null, true);
-      } else {
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
+    origin: true,
     credentials: true
   }));
 
@@ -45,10 +30,9 @@ export function setupAuth(app: Express) {
     name: 'rentcard.sid', // Custom cookie name
     cookie: {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
-      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
-      domain: process.env.NODE_ENV === 'production' ? '.myrentcard.com' : undefined
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
     },
     rolling: true // Extends the session expiry on each request
   };
