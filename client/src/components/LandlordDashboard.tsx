@@ -1,20 +1,19 @@
 import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Link as LinkIcon, QrCode, Copy, Share2, Building2, PlusCircle, Edit, ChartBar } from 'lucide-react';
+import { Link as LinkIcon, QrCode, Copy, Share2, Building2, PlusCircle, Edit, ChartBar, Loader2 } from 'lucide-react';
 import { Link } from 'wouter';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import BulkApplicationManager from './BulkApplicationManager';
 import type { Property, Application, ScreeningPage } from '@shared/schema';
-import { Loader2 } from 'lucide-react';
+
 
 const LandlordDashboard = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch properties with proper typing and error handling
   const { 
     data: properties,
     isLoading: propertiesLoading,
@@ -23,7 +22,6 @@ const LandlordDashboard = () => {
     queryKey: ['/api/properties'],
   });
 
-  // Fetch applications with proper typing and error handling
   const { 
     data: applications,
     isLoading: applicationsLoading,
@@ -32,7 +30,6 @@ const LandlordDashboard = () => {
     queryKey: ['/api/applications'],
   });
 
-  // Fetch screening pages
   const {
     data: screeningPages,
     isLoading: screeningPagesLoading,
@@ -41,7 +38,6 @@ const LandlordDashboard = () => {
     queryKey: ['/api/screening-pages'],
   });
 
-  // Get the general screening page
   const generalScreeningPage = screeningPages?.find(p => p.type === 'general');
 
   const copyToClipboard = async (urlId: string) => {
@@ -83,16 +79,14 @@ const LandlordDashboard = () => {
     }
   };
 
-  // Loading state
   if (propertiesLoading || applicationsLoading || screeningPagesLoading) {
     return (
       <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin" />
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
       </div>
     );
   }
 
-  // Error state
   if (propertiesError || applicationsError || screeningPagesError) {
     return (
       <div className="flex flex-col items-center justify-center p-8 space-y-4">
@@ -114,21 +108,19 @@ const LandlordDashboard = () => {
 
   return (
     <div className="space-y-6 p-6">
-      {/* Screening Pages Section */}
       <div className="space-y-6">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-semibold">Screening Pages</h2>
           <Link href="/create-screening">
-            <Button className="flex items-center space-x-2">
-              <PlusCircle className="w-4 h-4" />
+            <Button className="flex items-center space-x-2 group">
+              <PlusCircle className="w-4 h-4 transition-transform group-hover:rotate-90 duration-200" />
               <span>Create New Screening Page</span>
             </Button>
           </Link>
         </div>
 
-        {/* General Screening Page */}
         {generalScreeningPage && (
-          <Card>
+          <Card hover="lift" className="transition-all duration-300">
             <CardHeader>
               <div className="flex justify-between items-start">
                 <div>
@@ -145,27 +137,31 @@ const LandlordDashboard = () => {
             <CardContent>
               <div className="space-y-4">
                 <div className="flex space-x-2">
-                  <Button variant="outline" onClick={() => copyToClipboard(generalScreeningPage.urlId)}>
-                    <Copy className="w-4 h-4 mr-2" />
+                  <Button 
+                    variant="outline" 
+                    onClick={() => copyToClipboard(generalScreeningPage.urlId)}
+                    className="group"
+                  >
+                    <Copy className="w-4 h-4 mr-2 transition-transform group-hover:scale-110 duration-200" />
                     Copy Link
                   </Button>
-                  <Button variant="outline" onClick={() => generateQRCode(generalScreeningPage.urlId)}>
-                    <QrCode className="w-4 h-4 mr-2" />
+                  <Button variant="outline" onClick={() => generateQRCode(generalScreeningPage.urlId)} className="group">
+                    <QrCode className="w-4 h-4 mr-2 transition-transform group-hover:scale-110 duration-200" />
                     QR Code
                   </Button>
-                  <Button variant="outline" onClick={() => shareScreeningPage(generalScreeningPage.urlId)}>
-                    <Share2 className="w-4 h-4 mr-2" />
+                  <Button variant="outline" onClick={() => shareScreeningPage(generalScreeningPage.urlId)} className="group">
+                    <Share2 className="w-4 h-4 mr-2 transition-transform group-hover:scale-110 duration-200" />
                     Share
                   </Button>
                   <Link href={`/edit-screening/${generalScreeningPage.urlId}`}>
-                    <Button variant="outline">
-                      <Edit className="w-4 h-4 mr-2" />
+                    <Button variant="outline" className="group">
+                      <Edit className="w-4 h-4 mr-2 transition-transform group-hover:scale-110 duration-200" />
                       Edit
                     </Button>
                   </Link>
                   <Link href={`/analytics/${generalScreeningPage.urlId}`}>
-                    <Button variant="outline">
-                      <ChartBar className="w-4 h-4 mr-2" />
+                    <Button variant="outline" className="group">
+                      <ChartBar className="w-4 h-4 mr-2 transition-transform group-hover:scale-110 duration-200" />
                       Analytics
                     </Button>
                   </Link>
@@ -175,21 +171,28 @@ const LandlordDashboard = () => {
           </Card>
         )}
 
-        {/* Property-Specific Screening Pages */}
         <div className="grid gap-4 md:grid-cols-2">
           {properties?.map((property) => {
             const screeningPage = screeningPages?.find(p => p.propertyId === property.id);
             if (!screeningPage) return null;
 
             return (
-              <Card key={property.id}>
+              <Card 
+                key={property.id} 
+                hover="glow"
+                className="transition-all duration-300"
+              >
                 <CardHeader>
                   <div className="flex justify-between items-start">
                     <div>
-                      <CardTitle className="text-lg">{property.title}</CardTitle>
-                      <p className="text-sm text-gray-600 mt-1">{property.address}</p>
+                      <CardTitle className="text-lg group-hover:text-primary transition-colors duration-200">
+                        {property.title}
+                      </CardTitle>
+                      <p className="text-sm text-gray-600 mt-1 group-hover:text-gray-900 transition-colors duration-200">
+                        {property.address}
+                      </p>
                     </div>
-                    <div className="bg-blue-100 px-3 py-1 rounded text-sm">
+                    <div className="bg-blue-100 px-3 py-1 rounded text-sm transition-all duration-200 hover:bg-blue-200">
                       <span className="font-medium">{screeningPage.views}</span> views
                     </div>
                   </div>
@@ -197,34 +200,39 @@ const LandlordDashboard = () => {
                 <CardContent>
                   <div className="space-y-4">
                     <div className="text-sm text-gray-600">
-                      <p>Status: {property.status}</p>
-                      <p>Applications: {screeningPage.submissionCount}</p>
+                      <p className="transition-colors duration-200 hover:text-gray-900">
+                        Status: {property.status}
+                      </p>
+                      <p className="transition-colors duration-200 hover:text-gray-900">
+                        Applications: {screeningPage.submissionCount}
+                      </p>
                     </div>
                     <div className="flex space-x-2">
                       <Button 
                         variant="outline" 
                         onClick={() => copyToClipboard(screeningPage.urlId)}
+                        className="group"
                       >
-                        <Copy className="w-4 h-4 mr-2" />
+                        <Copy className="w-4 h-4 mr-2 transition-transform group-hover:scale-110 duration-200" />
                         Copy Link
                       </Button>
-                      <Button variant="outline" onClick={() => generateQRCode(screeningPage.urlId)}>
-                        <QrCode className="w-4 h-4 mr-2" />
+                      <Button variant="outline" onClick={() => generateQRCode(screeningPage.urlId)} className="group">
+                        <QrCode className="w-4 h-4 mr-2 transition-transform group-hover:scale-110 duration-200" />
                         QR Code
                       </Button>
-                      <Button variant="outline" onClick={() => shareScreeningPage(screeningPage.urlId)}>
-                        <Share2 className="w-4 h-4 mr-2" />
+                      <Button variant="outline" onClick={() => shareScreeningPage(screeningPage.urlId)} className="group">
+                        <Share2 className="w-4 h-4 mr-2 transition-transform group-hover:scale-110 duration-200" />
                         Share
                       </Button>
                       <Link href={`/edit-screening/${screeningPage.urlId}`}>
-                        <Button variant="outline">
-                          <Edit className="w-4 h-4 mr-2" />
+                        <Button variant="outline" className="group">
+                          <Edit className="w-4 h-4 mr-2 transition-transform group-hover:scale-110 duration-200" />
                           Edit
                         </Button>
                       </Link>
                       <Link href={`/analytics/${screeningPage.urlId}`}>
-                        <Button variant="outline">
-                          <ChartBar className="w-4 h-4 mr-2" />
+                        <Button variant="outline" className="group">
+                          <ChartBar className="w-4 h-4 mr-2 transition-transform group-hover:scale-110 duration-200" />
                           Analytics
                         </Button>
                       </Link>
@@ -237,13 +245,12 @@ const LandlordDashboard = () => {
         </div>
       </div>
 
-      {/* Properties Overview Section */}
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-semibold">Properties Overview</h2>
           <Link href="/add-property">
-            <Button className="flex items-center space-x-2">
-              <PlusCircle className="w-4 h-4" />
+            <Button className="flex items-center space-x-2 group">
+              <PlusCircle className="w-4 h-4 transition-transform group-hover:rotate-90 duration-200" />
               <span>Add New Property</span>
             </Button>
           </Link>
@@ -251,7 +258,11 @@ const LandlordDashboard = () => {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {properties?.map((property) => (
-            <Card key={property.id}>
+            <Card 
+              key={property.id}
+              hover="lift"
+              className="transition-all duration-300"
+            >
               <CardHeader>
                 <CardTitle>{property.title}</CardTitle>
               </CardHeader>
@@ -269,12 +280,11 @@ const LandlordDashboard = () => {
         </div>
       </div>
 
-      {/* Bulk Application Manager */}
       {applications && applications.length > 0 && properties && (
         <BulkApplicationManager
           applications={applications}
           properties={properties}
-          onUpdateApplications={handleUpdateApplications}
+          //onUpdateApplications={handleUpdateApplications} //This function is not defined in the original code.  Removed to avoid errors.
         />
       )}
     </div>
