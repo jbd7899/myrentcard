@@ -96,8 +96,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/properties", async (req, res) => {
-    if (!req.isAuthenticated() || req.user.type !== "landlord") {
-      return res.sendStatus(403);
+    if (!req.isAuthenticated()) {
+      return res.sendStatus(401);
+    }
+
+    if (req.user.type !== "landlord") {
+      return res.status(403).json({ message: "Only landlords can create properties" });
     }
 
     const validation = insertPropertySchema.safeParse(req.body);
@@ -105,15 +109,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       return res.status(400).json(validation.error);
     }
 
-    const property = await storage.createProperty({
-      ...validation.data,
-      landlordId: req.user.id,
-      status: "Available",
-      pageViews: 0,
-      uniqueVisitors: 0,
-      submissionCount: 0
-    });
-    res.status(201).json(property);
+    try {
+      const property = await storage.createProperty({
+        ...validation.data,
+        landlordId: req.user.id,
+        status: "Available",
+        available: true,
+        pageViews: 0,
+        uniqueVisitors: 0,
+        submissionCount: 0
+      });
+      res.status(201).json(property);
+    } catch (error) {
+      console.error("Failed to create property:", error);
+      res.status(500).json({ message: "Failed to create property" });
+    }
   });
 
   // Track RentCard view
