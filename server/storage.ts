@@ -51,23 +51,23 @@ export class ReplitStorage implements IStorage {
     if (!this.initialized) {
       try {
         const keys = await db.list();
-        if (Array.isArray(keys)) {
-          for (const key of keys) {
-            if (key.startsWith(USERS_PREFIX)) {
-              const id = parseInt(key.split(':')[1]);
-              if (!isNaN(id)) {
-                this.lastIds.users = Math.max(this.lastIds.users, id);
-              }
-            } else if (key.startsWith(PROPERTIES_PREFIX)) {
-              const id = parseInt(key.split(':')[1]);
-              if (!isNaN(id)) {
-                this.lastIds.properties = Math.max(this.lastIds.properties, id);
-              }
-            } else if (key.startsWith(APPLICATIONS_PREFIX)) {
-              const id = parseInt(key.split(':')[1]);
-              if (!isNaN(id)) {
-                this.lastIds.applications = Math.max(this.lastIds.applications, id);
-              }
+        // Handle the response safely
+        const keyArray = Array.isArray(keys) ? keys : [];
+        for (const key of keyArray) {
+          if (key.startsWith(USERS_PREFIX)) {
+            const id = parseInt(key.split(':')[1]);
+            if (!isNaN(id)) {
+              this.lastIds.users = Math.max(this.lastIds.users, id);
+            }
+          } else if (key.startsWith(PROPERTIES_PREFIX)) {
+            const id = parseInt(key.split(':')[1]);
+            if (!isNaN(id)) {
+              this.lastIds.properties = Math.max(this.lastIds.properties, id);
+            }
+          } else if (key.startsWith(APPLICATIONS_PREFIX)) {
+            const id = parseInt(key.split(':')[1]);
+            if (!isNaN(id)) {
+              this.lastIds.applications = Math.max(this.lastIds.applications, id);
             }
           }
         }
@@ -86,11 +86,14 @@ export class ReplitStorage implements IStorage {
     return this.lastIds[type];
   }
 
-  // User operations
+  // User operations with proper type handling
   async getUser(id: number): Promise<User | undefined> {
     try {
-      const user = await db.get(`${USERS_PREFIX}${id}`);
-      return user || undefined;
+      const result = await db.get(`${USERS_PREFIX}${id}`);
+      if (result && typeof result === 'object' && 'id' in result) {
+        return result as User;
+      }
+      return undefined;
     } catch (error) {
       console.error('Failed to get user:', error);
       return undefined;
@@ -100,12 +103,17 @@ export class ReplitStorage implements IStorage {
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
       const keys = await db.list(USERS_PREFIX);
-      if (Array.isArray(keys)) {
-        for (const key of keys) {
-          const user = await db.get(key);
-          if (user && user.username === username) {
-            return user as User;
-          }
+      const keyArray = Array.isArray(keys) ? keys : [];
+
+      for (const key of keyArray) {
+        const result = await db.get(key);
+        if (
+          result && 
+          typeof result === 'object' && 
+          'username' in result && 
+          result.username === username
+        ) {
+          return result as User;
         }
       }
       return undefined;
@@ -126,13 +134,14 @@ export class ReplitStorage implements IStorage {
     return user;
   }
 
-  // Property operations
+  // Property operations with proper type handling
   async createProperty(insertProperty: Omit<Property, "id" | "createdAt">): Promise<Property> {
     const id = await this.getNextId('properties');
     const property: Property = {
       id,
       ...insertProperty,
-      createdAt: new Date()
+      createdAt: new Date(),
+      imageUrl: insertProperty.imageUrl || undefined
     };
     await db.set(`${PROPERTIES_PREFIX}${id}`, property);
     return property;
@@ -141,17 +150,22 @@ export class ReplitStorage implements IStorage {
   async getAllProperties(): Promise<Property[]> {
     try {
       const keys = await db.list(PROPERTIES_PREFIX);
-      if (!Array.isArray(keys)) return [];
+      const keyArray = Array.isArray(keys) ? keys : [];
 
       const properties = await Promise.all(
-        keys.map(async key => {
+        keyArray.map(async key => {
           try {
-            return await db.get(key);
+            const result = await db.get(key);
+            if (result && typeof result === 'object' && 'id' in result) {
+              return result as Property;
+            }
+            return null;
           } catch {
             return null;
           }
         })
       );
+
       return properties.filter((p): p is Property => p !== null);
     } catch (error) {
       console.error('Failed to get all properties:', error);
@@ -161,8 +175,11 @@ export class ReplitStorage implements IStorage {
 
   async getPropertyById(id: number): Promise<Property | undefined> {
     try {
-      const property = await db.get(`${PROPERTIES_PREFIX}${id}`);
-      return property || undefined;
+      const result = await db.get(`${PROPERTIES_PREFIX}${id}`);
+      if (result && typeof result === 'object' && 'id' in result) {
+        return result as Property;
+      }
+      return undefined;
     } catch (error) {
       console.error('Failed to get property by id:', error);
       return undefined;
@@ -193,13 +210,14 @@ export class ReplitStorage implements IStorage {
     }
   }
 
-  // Application operations
+  // Application operations with proper type handling
   async createApplication(insertApplication: Omit<Application, "id" | "createdAt">): Promise<Application> {
     const id = await this.getNextId('applications');
     const application: Application = {
       id,
       ...insertApplication,
-      createdAt: new Date()
+      createdAt: new Date(),
+      message: insertApplication.message || undefined
     };
     await db.set(`${APPLICATIONS_PREFIX}${id}`, application);
     return application;
@@ -208,20 +226,28 @@ export class ReplitStorage implements IStorage {
   async getTenantApplications(tenantId: number): Promise<Application[]> {
     try {
       const keys = await db.list(APPLICATIONS_PREFIX);
-      if (!Array.isArray(keys)) return [];
+      const keyArray = Array.isArray(keys) ? keys : [];
 
       const applications = await Promise.all(
-        keys.map(async key => {
+        keyArray.map(async key => {
           try {
-            return await db.get(key);
+            const result = await db.get(key);
+            if (
+              result && 
+              typeof result === 'object' && 
+              'tenantId' in result && 
+              result.tenantId === tenantId
+            ) {
+              return result as Application;
+            }
+            return null;
           } catch {
             return null;
           }
         })
       );
 
-      return applications
-        .filter((app): app is Application => app !== null && app.tenantId === tenantId);
+      return applications.filter((app): app is Application => app !== null);
     } catch (error) {
       console.error('Failed to get tenant applications:', error);
       return [];
@@ -232,12 +258,21 @@ export class ReplitStorage implements IStorage {
     try {
       // First get all properties owned by this landlord
       const propertyKeys = await db.list(PROPERTIES_PREFIX);
-      if (!Array.isArray(propertyKeys)) return [];
+      const keyArray = Array.isArray(propertyKeys) ? propertyKeys : [];
 
       const properties = await Promise.all(
-        propertyKeys.map(async key => {
+        keyArray.map(async key => {
           try {
-            return await db.get(key);
+            const result = await db.get(key);
+            if (
+              result && 
+              typeof result === 'object' && 
+              'landlordId' in result && 
+              result.landlordId === landlordId
+            ) {
+              return result as Property;
+            }
+            return null;
           } catch {
             return null;
           }
@@ -245,26 +280,33 @@ export class ReplitStorage implements IStorage {
       );
 
       const landlordPropertyIds = properties
-        .filter((prop): prop is Property => prop !== null && prop.landlordId === landlordId)
+        .filter((prop): prop is Property => prop !== null)
         .map(prop => prop.id);
 
       // Then get applications for these properties
       const applicationKeys = await db.list(APPLICATIONS_PREFIX);
-      if (!Array.isArray(applicationKeys)) return [];
+      const appKeyArray = Array.isArray(applicationKeys) ? applicationKeys : [];
 
       const applications = await Promise.all(
-        applicationKeys.map(async key => {
+        appKeyArray.map(async key => {
           try {
-            return await db.get(key);
+            const result = await db.get(key);
+            if (
+              result && 
+              typeof result === 'object' && 
+              'propertyId' in result && 
+              landlordPropertyIds.includes(result.propertyId)
+            ) {
+              return result as Application;
+            }
+            return null;
           } catch {
             return null;
           }
         })
       );
 
-      return applications.filter((app): app is Application => 
-        app !== null && landlordPropertyIds.includes(app.propertyId)
-      );
+      return applications.filter((app): app is Application => app !== null);
     } catch (error) {
       console.error('Failed to get landlord applications:', error);
       return [];
