@@ -4,6 +4,7 @@ import { Express } from "express";
 import session from "express-session";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import cors from "cors";
 
 declare global {
   namespace Express {
@@ -12,17 +13,35 @@ declare global {
 }
 
 export function setupAuth(app: Express) {
+  // Enable CORS with credentials
+  app.use(cors({
+    origin: true, // Allow all origins in development
+    credentials: true // Important for cookies/session
+  }));
+
+  const isDevelopment = process.env.NODE_ENV !== 'production';
+  console.log(`[Auth Debug] Running in ${isDevelopment ? 'development' : 'production'} mode`);
+
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'development-secret',
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
     store: storage.sessionStore,
+    name: 'rentcard.sid', // Custom cookie name
     cookie: {
       httpOnly: true,
-      secure: false, // Set to false to work in development
+      secure: !isDevelopment, // Only use secure in production
+      sameSite: isDevelopment ? 'lax' : 'strict',
       maxAge: 24 * 60 * 60 * 1000 // 24 hours
     }
   };
+
+  // Debug session configuration
+  console.log('[Auth Debug] Session settings:', {
+    ...sessionSettings,
+    secret: '[REDACTED]',
+    store: '[SessionStore]'
+  });
 
   app.use(session(sessionSettings));
   app.use(passport.initialize());
@@ -46,6 +65,7 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Invalid password" });
         }
 
+        console.log(`[Auth Debug] Login successful for user: ${username}`);
         return done(null, user);
       } catch (error) {
         console.error("[Auth Debug] Login error:", error);
@@ -67,6 +87,7 @@ export function setupAuth(app: Express) {
         console.log(`[Auth Debug] Failed to deserialize user: ${id} - User not found`);
         return done(null, false);
       }
+      console.log(`[Auth Debug] Successfully deserialized user: ${id}`);
       done(null, user);
     } catch (error) {
       console.error("[Auth Debug] Deserialization error:", error);
@@ -77,18 +98,23 @@ export function setupAuth(app: Express) {
   // Add authentication debugging middleware
   app.use((req, res, next) => {
     console.log(`[Auth Debug] ${req.method} ${req.path}`);
+    console.log(`[Auth Debug] Session ID: ${req.sessionID}`);
     console.log(`[Auth Debug] isAuthenticated: ${req.isAuthenticated()}`);
+    console.log(`[Auth Debug] Session:`, req.session);
     if (req.user) {
       console.log(`[Auth Debug] User: ${JSON.stringify(req.user)}`);
     }
     next();
   });
 
-  // Auth routes
+  // Auth routes with improved error handling and logging
   app.post("/api/register", async (req, res, next) => {
     try {
+      console.log('[Auth Debug] Registration attempt:', { username: req.body.username });
+
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
+        console.log('[Auth Debug] Registration failed: Username exists');
         return res.status(400).json({ message: "Username already exists" });
       }
 
@@ -98,23 +124,32 @@ export function setupAuth(app: Express) {
         password: hashedPassword,
       });
 
+      console.log('[Auth Debug] User created successfully:', { id: user.id });
+
       req.login(user, (err) => {
-        if (err) return next(err);
+        if (err) {
+          console.error('[Auth Debug] Login after registration failed:', err);
+          return next(err);
+        }
+        console.log('[Auth Debug] Login after registration successful');
         res.status(201).json(user);
       });
     } catch (error) {
-      console.error("Registration error:", error);
+      console.error("[Auth Debug] Registration error:", error);
       res.status(500).json({ message: "Error creating user" });
     }
   });
 
   app.post("/api/login", (req, res, next) => {
+    console.log('[Auth Debug] Login attempt:', { username: req.body.username });
+
     passport.authenticate("local", (err: any, user: any, info: any) => {
       if (err) {
         console.error("Login error:", err);
         return next(err);
       }
       if (!user) {
+        console.log('[Auth Debug] Authentication failed:', info?.message);
         return res.status(401).json({ message: info?.message || "Authentication failed" });
       }
       req.login(user, (err) => {
@@ -123,6 +158,8 @@ export function setupAuth(app: Express) {
           return next(err);
         }
         console.log("Login successful for user:", user.id);
+        // Set a custom header to indicate successful authentication
+        res.setHeader('X-Authentication-Status', 'success');
         res.status(200).json(user);
       });
     })(req, res, next);
@@ -137,6 +174,10 @@ export function setupAuth(app: Express) {
   });
 
   app.get("/api/user", (req, res) => {
+    console.log('[Auth Debug] User check request');
+    console.log('[Auth Debug] Session:', req.session);
+    console.log('[Auth Debug] isAuthenticated:', req.isAuthenticated());
+
     if (!req.isAuthenticated()) {
       console.log("Unauthenticated user access attempt");
       return res.sendStatus(401);
