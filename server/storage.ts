@@ -33,18 +33,23 @@ export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
+    // Initialize session store with debug logging
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000,
+      debug: true,
+      stale: true
     });
   }
 
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    console.log("[Storage Debug] getUser result:", user);
     return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.username, username));
+    console.log("[Storage Debug] getUserByUsername result:", user);
     return user;
   }
 

@@ -69,6 +69,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   setupAuth(app);
 
+  // Add authentication debugging middleware
+  app.use((req, res, next) => {
+    console.log(`[Auth Debug] ${req.method} ${req.path}`);
+    console.log(`[Auth Debug] isAuthenticated: ${req.isAuthenticated()}`);
+    if (req.user) {
+      console.log(`[Auth Debug] User: ${JSON.stringify(req.user)}`);
+    }
+    next();
+  });
+
   // Create uploads directory if it doesn't exist
   if (!fs.existsSync('./uploads')) {
     fs.mkdirSync('./uploads');
@@ -96,16 +106,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   app.post("/api/properties", async (req, res) => {
+    console.log("[Property Debug] Request body:", req.body);
+    console.log("[Property Debug] User authentication status:", req.isAuthenticated());
+    console.log("[Property Debug] User:", req.user);
+
     if (!req.isAuthenticated()) {
+      console.log("[Property Debug] Not authenticated");
       return res.sendStatus(401);
     }
 
     if (req.user.type !== "landlord") {
+      console.log("[Property Debug] Not a landlord");
       return res.status(403).json({ message: "Only landlords can create properties" });
     }
 
     const validation = insertPropertySchema.safeParse(req.body);
     if (!validation.success) {
+      console.log("[Property Debug] Validation failed:", validation.error);
       return res.status(400).json(validation.error);
     }
 

@@ -41,15 +41,16 @@ export function setupAuth(app: Express) {
   // Enhanced session configuration with secure settings
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'development-secret',
-    resave: false,
-    saveUninitialized: false,
+    resave: true, // Changed to true to ensure session is saved
+    saveUninitialized: true, // Changed to true to create session for all requests
     store: storage.sessionStore,
-    name: 'sid',
+    name: 'sid', // Set a specific cookie name
     cookie: {
       httpOnly: true,
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       sameSite: 'lax',
-      secure: process.env.NODE_ENV === 'production'
+      secure: process.env.NODE_ENV === 'production',
+      path: '/'
     }
   };
 
@@ -61,16 +62,16 @@ export function setupAuth(app: Express) {
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
-        console.log(`Attempting login for user: ${username}`);
+        console.log(`[Auth Debug] Attempting login for user: ${username}`);
         const user = await storage.getUserByUsername(username);
 
         if (!user) {
-          console.log(`User not found: ${username}`);
+          console.log(`[Auth Debug] User not found: ${username}`);
           return done(null, false, { message: "User not found" });
         }
 
         const isValidPassword = await comparePasswords(password, user.password);
-        console.log(`Password validation result for ${username}: ${isValidPassword}`);
+        console.log(`[Auth Debug] Password validation result for ${username}: ${isValidPassword}`);
 
         if (!isValidPassword) {
           return done(null, false, { message: "Invalid password" });
@@ -78,28 +79,28 @@ export function setupAuth(app: Express) {
 
         return done(null, user);
       } catch (error) {
-        console.error("Login error:", error);
+        console.error("[Auth Debug] Login error:", error);
         return done(error);
       }
     })
   );
 
   passport.serializeUser((user, done) => {
-    console.log(`Serializing user: ${user.id}`);
+    console.log(`[Auth Debug] Serializing user: ${user.id}`);
     done(null, user.id);
   });
 
   passport.deserializeUser(async (id: number, done) => {
     try {
-      console.log(`Deserializing user: ${id}`);
+      console.log(`[Auth Debug] Deserializing user: ${id}`);
       const user = await storage.getUser(id);
       if (!user) {
-        console.log(`Failed to deserialize user: ${id} - User not found`);
+        console.log(`[Auth Debug] Failed to deserialize user: ${id} - User not found`);
         return done(null, false);
       }
       done(null, user);
     } catch (error) {
-      console.error("Deserialization error:", error);
+      console.error("[Auth Debug] Deserialization error:", error);
       done(error);
     }
   });
