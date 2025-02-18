@@ -9,7 +9,7 @@ import fs from 'fs';
 import { insertPropertySchema, insertApplicationSchema, insertScreeningPageSchema, insertScreeningSubmissionSchema } from "@shared/schema";
 import crypto from 'crypto';
 
-// Helper function for generating random URL IDs at the top of the file
+// Helper function for generating random URL IDs
 function generateUrlId(): string {
   const length = 32;
   const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
@@ -25,20 +25,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
     console.log("[Debug] Initializing routes and test data...");
 
     // Check if test account already exists
-    const existingTestUser = await storage.getUserByUsername("test1");
+    const existingTestUser = await storage.getUserByUsername("landlordtest");
     if (!existingTestUser) {
       console.log("[Debug] No test account found, creating test accounts...");
 
-      // Create test landlord/tenant combo account
+      // Create test landlord account
       const testLandlord = await storage.createUser({
-        username: "test1",
+        username: "landlordtest",
         password: "test1",
         type: "both",  // Allow both roles
-        name: "Test User 1", 
-        email: "test1@example.com",
+        name: "Landlord Test", 
+        email: "landlordtest@example.com",
         phone: "1234567890"
       });
-      console.log("[Debug] Created test user:", testLandlord);
+      console.log("[Debug] Created test landlord:", testLandlord);
 
       // Create test tenant
       const testTenant = await storage.createUser({
@@ -86,13 +86,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       console.log("[Debug] Created test property 2:", property2);
 
-      // Create test screening pages
+      // Create test screening pages with random URLs
       const generalScreeningPage = await storage.createScreeningPage({
         landlordId: testLandlord.id,
         propertyId: null,
         type: "general",
         urlId: generateUrlId(), // Generate random URL ID
-        title: "Test1 General Rental Application",
+        title: "Landlord Test General Rental Application",
         description: "Apply for any of our available properties",
         customFields: [
           {
@@ -169,16 +169,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           message: "Interested in moving in next month"
         },
         {
-          propertyId: property1.id,
-          tenantId: testTenant.id,
-          status: 'pending' as const,
-          message: "Looking for immediate move-in"
-        },
-        {
           propertyId: property2.id,
           tenantId: testTenant.id,
           status: 'pending' as const,
-          message: "Family of four, excellent rental history"
+          message: "Looking for immediate move-in"
         }
       ];
 
@@ -194,7 +188,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   } catch (error) {
     console.error("[Debug] Error managing test data:", error);
-    throw error; // Re-throw to ensure proper error handling
+    throw error;
   }
 
   setupAuth(app);
