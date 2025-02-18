@@ -50,6 +50,7 @@ const startServer = async (initialPort: number) => {
     if (app.get("env") === "development") {
       await setupVite(app, server);
     } else {
+      // Update the static file serving path to match Vite's output directory
       app.use(express.static('dist/public'));
       app.get('*', (req, res) => {
         res.sendFile('dist/public/index.html', { root: '.' });
