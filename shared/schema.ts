@@ -202,3 +202,5 @@ export type RentCard = typeof rentCards.$inferSelect;
 export type InsertRentCard = z.infer<typeof insertRentCardSchema>;
 export type RentalReference = typeof rentalReferences.$inferSelect;
 export type InsertRentalReference = z.infer<typeof insertRentalReferenceSchema>;
+export type InsertScreeningPage = z.infer<typeof insertScreeningPageSchema>;
+export type InsertScreeningSubmission = z.infer<typeof insertScreeningSubmissionSchema>;

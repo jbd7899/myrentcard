@@ -1,4 +1,14 @@
-import type { InsertUser, User, Property, Application, ApplicationStatus, ScreeningPage, ScreeningSubmission } from "@shared/schema";
+import type { 
+  InsertUser, 
+  User, 
+  Property, 
+  Application, 
+  ApplicationStatus, 
+  ScreeningPage, 
+  ScreeningSubmission,
+  InsertScreeningPage,
+  InsertScreeningSubmission 
+} from "@shared/schema";
 import { users, properties, applications, screeningPages, screeningSubmissions } from "@shared/schema";
 import { db } from "./db";
 import { eq, inArray, sql } from "drizzle-orm";

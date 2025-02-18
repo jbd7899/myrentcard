@@ -50,9 +50,9 @@ const startServer = async (initialPort: number) => {
     if (app.get("env") === "development") {
       await setupVite(app, server);
     } else {
-      app.use(express.static('dist/client'));
+      app.use(express.static('dist/public'));
       app.get('*', (req, res) => {
-        res.sendFile('dist/client/index.html', { root: '.' });
+        res.sendFile('dist/public/index.html', { root: '.' });
       });
     }
 
