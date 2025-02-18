@@ -7,19 +7,31 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import BulkApplicationManager from './BulkApplicationManager';
-import type { Application, Property } from '@shared/schema';
+import type { Property, Application } from '@shared/schema';
+import { Loader2 } from 'lucide-react';
 
 const LandlordDashboard = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch applications and properties with proper typing
-  const { data: applications } = useQuery<Application[]>({
-    queryKey: ['/api/applications'],
+  // Fetch properties with proper typing and error handling
+  const { 
+    data: properties,
+    isLoading: propertiesLoading,
+    error: propertiesError 
+  } = useQuery<Property[]>({
+    queryKey: ['properties'],
+    retry: 3,
   });
 
-  const { data: properties } = useQuery<Property[]>({
-    queryKey: ['/api/properties'],
+  // Fetch applications with proper typing and error handling
+  const { 
+    data: applications,
+    isLoading: applicationsLoading,
+    error: applicationsError 
+  } = useQuery<Application[]>({
+    queryKey: ['applications'],
+    retry: 3,
   });
 
   // Mutation for bulk updating applications
@@ -32,7 +44,11 @@ const LandlordDashboard = () => {
       return response.json();
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
+      queryClient.invalidateQueries({ queryKey: ['applications'] });
+      toast({
+        title: "Success",
+        description: "Applications updated successfully",
+      });
     },
     onError: (error: Error) => {
       toast({
@@ -46,6 +62,22 @@ const LandlordDashboard = () => {
   const handleUpdateApplications = async (applicationIds: number[], status: 'approved' | 'rejected') => {
     await updateApplicationsMutation.mutateAsync({ applicationIds, status });
   };
+
+  if (propertiesLoading || applicationsLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin" />
+      </div>
+    );
+  }
+
+  if (propertiesError || applicationsError) {
+    return (
+      <div className="text-red-500 p-4">
+        Error loading dashboard data. Please try again later.
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 p-6">
@@ -62,6 +94,26 @@ const LandlordDashboard = () => {
             </Button>
           </Link>
         </div>
+      </div>
+
+      {/* Properties Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {properties?.map((property) => (
+          <Card key={property.id}>
+            <CardHeader>
+              <CardTitle>{property.title}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <p className="text-sm text-gray-600">{property.address}</p>
+              <div className="mt-4">
+                <p>Units: {property.units}</p>
+                <p>Status: {property.status}</p>
+                <p>Views: {property.pageViews}</p>
+                <p>Applications: {property.submissionCount}</p>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
 
       {/* Bulk Application Manager */}

@@ -3,37 +3,30 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Clock, Mail, Phone, Edit2, Share2, Eye, ExternalLink } from 'lucide-react';
+import { useQuery } from '@tanstack/react-query';
+import type { Application } from '@shared/schema';
+import { useAuth } from '@/hooks/use-auth';
 
 const TenantAccount = () => {
   const [activeTab, setActiveTab] = useState('profile');
-  const [rentCardViews, setRentCardViews] = useState([]);
-  
-  // Sample data - would come from backend in real implementation
-  const accountInfo = {
-    name: "Alex Thompson",
-    email: "alex@example.com",
-    phone: "(555) 123-4567",
-    city: "Seattle, WA",
-    lastUpdated: "2025-02-15",
-    loginMethod: "Google"
-  };
+  const { user } = useAuth();
 
-  const sharedLinks = [
-    {
-      recipient: "Parkview Apartments",
-      url: "myrentcard.com/share/abc123",
-      lastViewed: "2025-02-16 14:30",
-      dateShared: "2025-02-15"
-    },
-    {
-      recipient: "Urban Living Properties",
-      url: "myrentcard.com/share/def456",
-      lastViewed: null,
-      dateShared: "2025-02-14"
-    }
-  ];
+  // Fetch applications
+  const { data: applications, isLoading } = useQuery<Application[]>({
+    queryKey: ['/api/applications'],
+    retry: 3,
+  });
 
-  const sampleMessage = `Hi, I'm ${accountInfo.name} and I'm interested in your property. I've shared my RentCard with you which includes my complete rental application and history. You can view it at the link below.`;
+  // User's shared applications
+  const sharedApplications = applications?.map(app => ({
+    recipient: "Property Manager",
+    propertyId: app.propertyId,
+    dateShared: new Date(app.createdAt).toLocaleDateString(),
+    status: app.status,
+    message: app.message
+  })) || [];
+
+  const sampleMessage = `Hi, I'm ${user?.name} and I'm interested in your property. I've shared my RentCard with you which includes my complete rental application and history. You can view it at the link below.`;
 
   return (
     <div className="max-w-6xl mx-auto p-6 space-y-6">
@@ -50,12 +43,6 @@ const TenantAccount = () => {
           onClick={() => setActiveTab('sharing')}
         >
           Sharing History
-        </button>
-        <button
-          className={'pb-2 px-4 ' + (activeTab === 'scheduling' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600')}
-          onClick={() => setActiveTab('scheduling')}
-        >
-          Schedule Viewings
         </button>
         <button
           className={'pb-2 px-4 ' + (activeTab === 'references' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-600')}
@@ -75,26 +62,22 @@ const TenantAccount = () => {
             <div className="grid grid-cols-2 gap-6">
               <div>
                 <label className="block text-sm font-medium text-gray-700">Name</label>
-                <Input value={accountInfo.name} className="mt-1" disabled />
+                <Input value={user?.name || ''} className="mt-1" disabled />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Email</label>
-                <Input value={accountInfo.email} className="mt-1" disabled />
+                <Input value={user?.email || ''} className="mt-1" disabled />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700">Phone</label>
-                <Input value={accountInfo.phone} className="mt-1" disabled />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Current City</label>
-                <Input value={accountInfo.city} className="mt-1" disabled />
+                <Input value={user?.phone || ''} className="mt-1" disabled />
               </div>
             </div>
-            
+
             <div className="bg-blue-50 p-4 rounded-lg flex items-center justify-between">
               <div className="flex items-center space-x-2">
                 <Clock className="w-5 h-5 text-blue-500" />
-                <span>RentCard last updated: {accountInfo.lastUpdated}</span>
+                <span>Account created: {new Date(user?.createdAt || '').toLocaleDateString()}</span>
               </div>
               <Button variant="outline" className="flex items-center space-x-2">
                 <Edit2 className="w-4 h-4" />
@@ -132,37 +115,37 @@ const TenantAccount = () => {
 
           <Card>
             <CardHeader>
-              <CardTitle>Sharing History</CardTitle>
+              <CardTitle>Application History</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b">
-                      <th className="px-4 py-2 text-left">Recipient</th>
-                      <th className="px-4 py-2 text-left">Date Shared</th>
-                      <th className="px-4 py-2 text-left">Last Viewed</th>
+                      <th className="px-4 py-2 text-left">Property ID</th>
+                      <th className="px-4 py-2 text-left">Date Submitted</th>
+                      <th className="px-4 py-2 text-left">Status</th>
                       <th className="px-4 py-2 text-left">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {sharedLinks.map((link, index) => (
+                    {sharedApplications.map((app, index) => (
                       <tr key={index} className="border-b">
-                        <td className="px-4 py-3">{link.recipient}</td>
-                        <td className="px-4 py-3">{link.dateShared}</td>
+                        <td className="px-4 py-3">Property #{app.propertyId}</td>
+                        <td className="px-4 py-3">{app.dateShared}</td>
                         <td className="px-4 py-3">
-                          <div className="flex items-center space-x-2">
-                            <Eye className="w-4 h-4 text-gray-400" />
-                            <span>{link.lastViewed || 'Not viewed yet'}</span>
-                          </div>
+                          <span className={`px-2 py-1 rounded-full text-sm ${
+                            app.status === 'approved' ? 'bg-green-100 text-green-800' :
+                            app.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                            'bg-yellow-100 text-yellow-800'
+                          }`}>
+                            {app.status}
+                          </span>
                         </td>
                         <td className="px-4 py-3">
                           <div className="flex space-x-2">
                             <Button variant="outline" size="sm">
                               <Mail className="w-4 h-4" />
-                            </Button>
-                            <Button variant="outline" size="sm">
-                              <Phone className="w-4 h-4" />
                             </Button>
                             <Button variant="outline" size="sm">
                               <ExternalLink className="w-4 h-4" />
@@ -179,39 +162,6 @@ const TenantAccount = () => {
         </div>
       )}
 
-      {/* Scheduling Section */}
-      {activeTab === 'scheduling' && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Schedule Property Viewings</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {rentCardViews.length > 0 ? (
-              <div className="space-y-4">
-                {rentCardViews.map((view) => (
-                  <div key={view.id} className="p-4 border rounded-lg">
-                    <h3 className="font-medium">{view.propertyName}</h3>
-                    <p className="text-sm text-gray-600">Viewed by {view.landlordName}</p>
-                    <div className="mt-4">
-                      <Button 
-                        onClick={() => setShowScheduling(view.id)}
-                        className="w-full sm:w-auto"
-                      >
-                        Schedule Viewing
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-8 text-gray-600">
-                No landlords have viewed your RentCard yet. Share your RentCard to get started!
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
       {/* References Section */}
       {activeTab === 'references' && (
         <Card>
@@ -224,7 +174,7 @@ const TenantAccount = () => {
                 <Share2 className="w-4 h-4" />
                 <span>Request New Reference</span>
               </Button>
-              
+
               <div className="bg-gray-50 p-4 rounded-lg text-center">
                 <p className="text-gray-600">No references collected yet. Share the reference request form with your previous landlords to start building your rental history.</p>
               </div>
