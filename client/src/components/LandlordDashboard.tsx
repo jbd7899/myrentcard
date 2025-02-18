@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Link as LinkIcon, QrCode, Copy, Share2, Building2, PlusCircle, Edit, ChartBar } from 'lucide-react';
@@ -41,37 +41,13 @@ const LandlordDashboard = () => {
     queryKey: ['/api/screening-pages'],
   });
 
-  // Mutation for bulk updating applications
-  const updateApplicationsMutation = useMutation({
-    mutationFn: async ({ applicationIds, status }: { applicationIds: number[], status: 'approved' | 'rejected' }) => {
-      await apiRequest('PATCH', '/api/applications/bulk', {
-        applicationIds,
-        status,
-      });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['/api/applications'] });
-      toast({
-        title: "Success",
-        description: "Applications updated successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: "Failed to update applications: " + error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  // Get the general screening page
+  const generalScreeningPage = screeningPages?.find(p => p.type === 'general');
 
-  const handleUpdateApplications = async (applicationIds: number[], status: 'approved' | 'rejected') => {
-    await updateApplicationsMutation.mutateAsync({ applicationIds, status });
-  };
-
-  const copyToClipboard = async (text: string) => {
+  const copyToClipboard = async (urlId: string) => {
     try {
-      await navigator.clipboard.writeText(text);
+      const url = `${window.location.origin}/screening/${urlId}`;
+      await navigator.clipboard.writeText(url);
       toast({
         title: "Link copied",
         description: "The screening page link has been copied to your clipboard",
@@ -85,16 +61,16 @@ const LandlordDashboard = () => {
     }
   };
 
-  const generateQRCode = (screeningPageId: string) => {
-    window.open(`/qr-code/${screeningPageId}`, '_blank');
+  const generateQRCode = (urlId: string) => {
+    window.open(`/qr-code/${urlId}`, '_blank');
   };
 
-  const shareScreeningPage = (screeningPageId: string) => {
+  const shareScreeningPage = (urlId: string) => {
     if (navigator.share) {
       navigator.share({
         title: 'Rental Screening Page',
         text: 'Check out this rental screening page',
-        url: `${window.location.origin}/screening/${screeningPageId}`,
+        url: `${window.location.origin}/screening/${urlId}`,
       }).catch(() => {
         toast({
           title: "Sharing failed",
@@ -103,7 +79,7 @@ const LandlordDashboard = () => {
         });
       });
     } else {
-      copyToClipboard(`${window.location.origin}/screening/${screeningPageId}`);
+      copyToClipboard(urlId);
     }
   };
 
@@ -116,7 +92,7 @@ const LandlordDashboard = () => {
     );
   }
 
-  // Error state with retry button
+  // Error state
   if (propertiesError || applicationsError || screeningPagesError) {
     return (
       <div className="flex flex-col items-center justify-center p-8 space-y-4">
@@ -151,56 +127,60 @@ const LandlordDashboard = () => {
         </div>
 
         {/* General Screening Page */}
-        <Card>
-          <CardHeader>
-            <div className="flex justify-between items-start">
-              <div>
-                <CardTitle>General Screening Page</CardTitle>
-                <p className="text-sm text-gray-600 mt-1">
-                  Default screening page for all rental applications
-                </p>
+        {generalScreeningPage && (
+          <Card>
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <CardTitle>General Screening Page</CardTitle>
+                  <p className="text-sm text-gray-600 mt-1">
+                    Default screening page for all rental applications
+                  </p>
+                </div>
+                <div className="bg-blue-100 px-3 py-1 rounded text-sm">
+                  <span className="font-medium">{generalScreeningPage.views}</span> views
+                </div>
               </div>
-              <div className="bg-blue-100 px-3 py-1 rounded text-sm">
-                <span className="font-medium">{screeningPages?.find(p => p.type === 'general')?.views || 0}</span> views
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex space-x-2">
-                <Button variant="outline" onClick={() => copyToClipboard(`${window.location.origin}/screening/general`)}>
-                  <Copy className="w-4 h-4 mr-2" />
-                  Copy Link
-                </Button>
-                <Button variant="outline" onClick={() => generateQRCode('general')}>
-                  <QrCode className="w-4 h-4 mr-2" />
-                  QR Code
-                </Button>
-                <Button variant="outline" onClick={() => shareScreeningPage('general')}>
-                  <Share2 className="w-4 h-4 mr-2" />
-                  Share
-                </Button>
-                <Link href="/edit-screening/general">
-                  <Button variant="outline">
-                    <Edit className="w-4 h-4 mr-2" />
-                    Edit
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex space-x-2">
+                  <Button variant="outline" onClick={() => copyToClipboard(generalScreeningPage.urlId)}>
+                    <Copy className="w-4 h-4 mr-2" />
+                    Copy Link
                   </Button>
-                </Link>
-                <Link href="/analytics/general">
-                  <Button variant="outline">
-                    <ChartBar className="w-4 h-4 mr-2" />
-                    Analytics
+                  <Button variant="outline" onClick={() => generateQRCode(generalScreeningPage.urlId)}>
+                    <QrCode className="w-4 h-4 mr-2" />
+                    QR Code
                   </Button>
-                </Link>
+                  <Button variant="outline" onClick={() => shareScreeningPage(generalScreeningPage.urlId)}>
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Share
+                  </Button>
+                  <Link href={`/edit-screening/${generalScreeningPage.urlId}`}>
+                    <Button variant="outline">
+                      <Edit className="w-4 h-4 mr-2" />
+                      Edit
+                    </Button>
+                  </Link>
+                  <Link href={`/analytics/${generalScreeningPage.urlId}`}>
+                    <Button variant="outline">
+                      <ChartBar className="w-4 h-4 mr-2" />
+                      Analytics
+                    </Button>
+                  </Link>
+                </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Property-Specific Screening Pages */}
         <div className="grid gap-4 md:grid-cols-2">
           {properties?.map((property) => {
             const screeningPage = screeningPages?.find(p => p.propertyId === property.id);
+            if (!screeningPage) return null;
+
             return (
               <Card key={property.id}>
                 <CardHeader>
@@ -210,7 +190,7 @@ const LandlordDashboard = () => {
                       <p className="text-sm text-gray-600 mt-1">{property.address}</p>
                     </div>
                     <div className="bg-blue-100 px-3 py-1 rounded text-sm">
-                      <span className="font-medium">{screeningPage?.views || 0}</span> views
+                      <span className="font-medium">{screeningPage.views}</span> views
                     </div>
                   </div>
                 </CardHeader>
@@ -218,31 +198,31 @@ const LandlordDashboard = () => {
                   <div className="space-y-4">
                     <div className="text-sm text-gray-600">
                       <p>Status: {property.status}</p>
-                      <p>Applications: {screeningPage?.submissionCount || 0}</p>
+                      <p>Applications: {screeningPage.submissionCount}</p>
                     </div>
                     <div className="flex space-x-2">
                       <Button 
                         variant="outline" 
-                        onClick={() => copyToClipboard(`${window.location.origin}/screening/property/${property.id}`)}
+                        onClick={() => copyToClipboard(screeningPage.urlId)}
                       >
                         <Copy className="w-4 h-4 mr-2" />
                         Copy Link
                       </Button>
-                      <Button variant="outline" onClick={() => generateQRCode(`property-${property.id}`)}>
+                      <Button variant="outline" onClick={() => generateQRCode(screeningPage.urlId)}>
                         <QrCode className="w-4 h-4 mr-2" />
                         QR Code
                       </Button>
-                      <Button variant="outline" onClick={() => shareScreeningPage(`property-${property.id}`)}>
+                      <Button variant="outline" onClick={() => shareScreeningPage(screeningPage.urlId)}>
                         <Share2 className="w-4 h-4 mr-2" />
                         Share
                       </Button>
-                      <Link href={`/edit-screening/property/${property.id}`}>
+                      <Link href={`/edit-screening/${screeningPage.urlId}`}>
                         <Button variant="outline">
                           <Edit className="w-4 h-4 mr-2" />
                           Edit
                         </Button>
                       </Link>
-                      <Link href={`/analytics/property/${property.id}`}>
+                      <Link href={`/analytics/${screeningPage.urlId}`}>
                         <Button variant="outline">
                           <ChartBar className="w-4 h-4 mr-2" />
                           Analytics
