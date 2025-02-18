@@ -32,7 +32,7 @@ export const properties = pgTable('properties', {
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
-// Application table definition
+// Application table definition with proper status typing
 export const applications = pgTable('applications', {
   id: serial('id').primaryKey(),
   propertyId: serial('property_id').notNull().references(() => properties.id),
@@ -58,6 +58,8 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
 export const insertApplicationSchema = createInsertSchema(applications).omit({
   id: true,
   createdAt: true
+}).extend({
+  status: z.enum(["pending", "approved", "rejected"])
 });
 
 // Export inferred types
@@ -65,6 +67,7 @@ export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type Property = typeof properties.$inferSelect;
 export type Application = typeof applications.$inferSelect;
+export type ApplicationStatus = "pending" | "approved" | "rejected";
 
 // Property requirements schema (for validation)
 export const propertyRequirementsSchema = z.object({

@@ -1,7 +1,7 @@
-import type { InsertUser, User, Property, Application } from "@shared/schema";
+import type { InsertUser, User, Property, Application, ApplicationStatus } from "@shared/schema";
 import { users, properties, applications } from "@shared/schema";
 import { db } from "./db";
-import { eq, inArray } from "drizzle-orm";
+import { eq, inArray, sql } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -25,7 +25,7 @@ export interface IStorage {
   createApplication(application: Omit<Application, "id" | "createdAt">): Promise<Application>;
   getTenantApplications(tenantId: number): Promise<Application[]>;
   getLandlordApplications(landlordId: number): Promise<Application[]>;
-  bulkUpdateApplications(applicationIds: number[], status: 'approved' | 'rejected'): Promise<void>;
+  bulkUpdateApplications(applicationIds: number[], status: ApplicationStatus): Promise<void>;
   // Password operations
   hashPassword(password: string): Promise<string>;
   comparePasswords(supplied: string, stored: string): Promise<boolean>;
@@ -77,14 +77,14 @@ export class DatabaseStorage implements IStorage {
   async incrementPropertyViews(id: number): Promise<void> {
     await db
       .update(properties)
-      .set({ pageViews: db.raw('page_views + 1') })
+      .set({ pageViews: sql`${properties.pageViews} + 1` })
       .where(eq(properties.id, id));
   }
 
   async incrementPropertySubmissions(id: number): Promise<void> {
     await db
       .update(properties)
-      .set({ submissionCount: db.raw('submission_count + 1') })
+      .set({ submissionCount: sql`${properties.submissionCount} + 1` })
       .where(eq(properties.id, id));
   }
 
@@ -98,12 +98,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getLandlordApplications(landlordId: number): Promise<Application[]> {
-    const props = await db.select().from(properties).where(eq(properties.landlordId, landlordId));
-    const propertyIds = props.map(p => p.id);
+    const landlordProperties = await db
+      .select()
+      .from(properties)
+      .where(eq(properties.landlordId, landlordId));
 
-    if (propertyIds.length === 0) {
+    if (landlordProperties.length === 0) {
       return [];
     }
+
+    const propertyIds = landlordProperties.map(p => p.id);
 
     return await db
       .select()
@@ -111,7 +115,7 @@ export class DatabaseStorage implements IStorage {
       .where(inArray(applications.propertyId, propertyIds));
   }
 
-  async bulkUpdateApplications(applicationIds: number[], status: 'approved' | 'rejected'): Promise<void> {
+  async bulkUpdateApplications(applicationIds: number[], status: ApplicationStatus): Promise<void> {
     if (applicationIds.length === 0) return;
 
     await db
