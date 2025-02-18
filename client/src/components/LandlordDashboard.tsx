@@ -7,17 +7,18 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
 import BulkApplicationManager from './BulkApplicationManager';
+import type { Application, Property } from '@shared/schema';
 
 const LandlordDashboard = () => {
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  // Fetch applications and properties
-  const { data: applications } = useQuery({
+  // Fetch applications and properties with proper typing
+  const { data: applications } = useQuery<Application[]>({
     queryKey: ['/api/applications'],
   });
 
-  const { data: properties } = useQuery({
+  const { data: properties } = useQuery<Property[]>({
     queryKey: ['/api/properties'],
   });
 
@@ -62,32 +63,6 @@ const LandlordDashboard = () => {
           </Link>
         </div>
       </div>
-
-      {/* Screening Pages Section */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Active Screening Pages</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            <Card className="p-4">
-              <div className="flex justify-between items-start mb-2">
-                <h3 className="font-medium">Sample Property</h3>
-                <Link href="/apply/lwcvjoa10">
-                  <Button variant="ghost" size="sm">
-                    <LinkIcon className="w-4 h-4 mr-2" />
-                    View
-                  </Button>
-                </Link>
-              </div>
-              <div className="text-sm text-gray-600">
-                <p>Views: 0</p>
-                <p>Submissions: 0</p>
-              </div>
-            </Card>
-          </div>
-        </CardContent>
-      </Card>
 
       {/* Bulk Application Manager */}
       {applications && properties && (

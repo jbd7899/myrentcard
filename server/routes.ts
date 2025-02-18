@@ -10,83 +10,78 @@ import fs from 'fs';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   try {
-    // Clear existing test accounts first
-    await storage.clearTestAccounts();
+    // Check if test account already exists
+    const existingTestUser = await storage.getUserByUsername("test1");
+    if (!existingTestUser) {
+      console.log("[Debug] No test account found, creating test accounts...");
 
-    console.log("[Debug] Creating test accounts...");
+      // Create test landlord
+      const testLandlord = await storage.createUser({
+        username: "test1",
+        password: "test1",
+        type: "landlord",
+        name: "Test Landlord 1",
+        email: "test1@example.com",
+        phone: "1234567890"
+      });
+      console.log("[Debug] Created test landlord:", testLandlord);
 
-    // Create test landlord
-    const testLandlord = await storage.createUser({
-      username: "test1",
-      password: "test1",
-      type: "landlord",
-      name: "Test Landlord 1",
-      email: "test1@example.com",
-      phone: "1234567890"
-    });
-    console.log("[Debug] Created test landlord:", testLandlord);
+      // Create test properties
+      const property1 = await storage.createProperty({
+        title: "Luxury Downtown Apartment",
+        description: "Modern 2-bedroom apartment in the heart of downtown",
+        address: "123 Main St",
+        units: 4,
+        parkingSpaces: 2,
+        landlordId: testLandlord.id,
+        status: "Available" as const,
+        available: true
+      });
 
-    // Create test properties
-    const property1 = await storage.createProperty({
-      title: "Luxury Downtown Apartment",
-      description: "Modern 2-bedroom apartment in the heart of downtown",
-      address: "123 Main St",
-      units: 4,
-      parkingSpaces: 2,
-      landlordId: testLandlord.id,
-      status: "Available",
-      available: true,
-      requirements: {
-        noEvictions: true,
-        cleanRentalHistory: true
+      const property2 = await storage.createProperty({
+        title: "Suburban Family Home",
+        description: "Spacious 3-bedroom house with garden",
+        address: "456 Oak Ave",
+        units: 1,
+        parkingSpaces: 2,
+        landlordId: testLandlord.id,
+        status: "Available" as const,
+        available: true
+      });
+
+      // Create some test applications
+      const testApplications = [
+        {
+          propertyId: property1.id,
+          tenantId: 999,
+          status: "pending" as const,
+          message: "Interested in moving in next month"
+        },
+        {
+          propertyId: property1.id,
+          tenantId: 998,
+          status: "pending" as const,
+          message: "Looking for immediate move-in"
+        },
+        {
+          propertyId: property2.id,
+          tenantId: 997,
+          status: "pending" as const,
+          message: "Family of four, excellent rental history"
+        }
+      ];
+
+      for (const app of testApplications) {
+        await storage.createApplication(app);
       }
-    });
 
-    const property2 = await storage.createProperty({
-      title: "Suburban Family Home",
-      description: "Spacious 3-bedroom house with garden",
-      address: "456 Oak Ave",
-      units: 1,
-      parkingSpaces: 2,
-      landlordId: testLandlord.id,
-      status: "Available",
-      available: true,
-      requirements: {
-        noEvictions: true,
-        cleanRentalHistory: true
-      }
-    });
-
-    // Create some test applications
-    const testApplications = [
-      {
-        propertyId: property1.id,
-        tenantId: 999, // Dummy tenant ID
-        status: "pending",
-        message: "Interested in moving in next month"
-      },
-      {
-        propertyId: property1.id,
-        tenantId: 998,
-        status: "pending",
-        message: "Looking for immediate move-in"
-      },
-      {
-        propertyId: property2.id,
-        tenantId: 997,
-        status: "pending",
-        message: "Family of four, excellent rental history"
-      }
-    ];
-
-    for (const app of testApplications) {
-      await storage.createApplication(app);
+      console.log("[Debug] Created test properties and applications");
+    } else {
+      console.log("[Debug] Test account already exists, skipping creation");
     }
 
-    console.log("[Debug] Created test properties and applications");
-
   } catch (error) {
-    console.error("[Debug] Error creating test data:", error);
+    console.error("[Debug] Error managing test data:", error);
   }
 
   setupAuth(app);

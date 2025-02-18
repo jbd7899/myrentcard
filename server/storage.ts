@@ -2,7 +2,10 @@ import type { InsertUser, User, Property, Application } from "@shared/schema";
 import session from "express-session";
 import createMemoryStore from "memorystore";
 import Database from "@replit/database";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
 
+const scryptAsync = promisify(scrypt);
 const MemoryStore = createMemoryStore(session);
 const db = new Database();
 
@@ -147,8 +150,12 @@ export class ReplitStorage implements IStorage {
         if (user &&
             typeof user === 'object' &&
             'username' in user &&
-            (user.username === 'testlandlord' || user.username === 'testtenant')) {
-          await db.delete(key);
+            (user.username === 'testlandlord' || user.username === 'testtenant' || user.username === 'test1')) {
+          //Check if the account exists before deleting.
+          const exists = await db.get(key)
+          if (exists) {
+            await db.delete(key);
+          }
         }
       }
     } catch (error) {
@@ -352,6 +359,32 @@ export class ReplitStorage implements IStorage {
       console.error('Failed to bulk update applications:', error);
       throw new Error('Failed to update applications');
     }
+  }
+
+  async hashPassword(password: string) {
+    // Special cases for test accounts
+    if (password === "testlandlord" || password === "testtenant" || password === "test1") {
+      return password;
+    }
+
+    const salt = randomBytes(16).toString("hex");
+    const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+    return `${buf.toString("hex")}.${salt}`;
+  }
+
+  async comparePasswords(supplied: string, stored: string) {
+    // Special cases for test accounts
+    if ((stored === "testlandlord" && supplied === "testlandlord") ||
+        (stored === "testtenant" && supplied === "testtenant") ||
+        (stored === "test1" && supplied === "test1")) {
+      return true;
+    }
+
+    // Regular password comparison for other accounts
+    const [hashed, salt] = stored.split(".");
+    const hashedBuf = Buffer.from(hashed, "hex");
+    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+    return timingSafeEqual(hashedBuf, suppliedBuf);
   }
 }
 
