@@ -14,6 +14,9 @@ import TenantFlow from "@/pages/tenant-flow";
 import NotFound from "@/pages/not-found";
 import Layout from "@/components/Layout";
 import SamplePrescreening from "@/pages/sample-prescreening";
+import QRCodePage from "@/pages/qr-code";
+import EditScreeningPage from "@/pages/edit-screening";
+import AnalyticsPage from "@/pages/analytics";
 
 function Router() {
   return (
@@ -27,6 +30,12 @@ function Router() {
         <Route path="/apply/:id" component={SamplePrescreening} />
         <ProtectedRoute path="/landlord" component={LandlordPage} />
         <ProtectedRoute path="/tenant" component={TenantPage} />
+        <ProtectedRoute path="/qr-code/general" component={QRCodePage} />
+        <ProtectedRoute path="/qr-code/property-:id" component={QRCodePage} />
+        <ProtectedRoute path="/edit-screening/general" component={EditScreeningPage} />
+        <ProtectedRoute path="/edit-screening/property/:id" component={EditScreeningPage} />
+        <ProtectedRoute path="/analytics/general" component={AnalyticsPage} />
+        <ProtectedRoute path="/analytics/property/:id" component={AnalyticsPage} />
         <Route component={NotFound} />
       </Switch>
     </Layout>
