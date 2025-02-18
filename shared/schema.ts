@@ -29,6 +29,7 @@ export const properties = pgTable('properties', {
   pageViews: integer('page_views').default(0).notNull(),
   uniqueVisitors: integer('unique_visitors').default(0).notNull(),
   submissionCount: integer('submission_count').default(0).notNull(),
+  rent: integer('rent').default(0).notNull(),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
 
@@ -37,7 +38,7 @@ export const applications = pgTable('applications', {
   id: serial('id').primaryKey(),
   propertyId: integer('property_id').notNull().references(() => properties.id),
   tenantId: integer('tenant_id').notNull().references(() => users.id),
-  status: varchar('status', { length: 50 }).notNull(),
+  status: varchar('status', { length: 50 }).$type<'pending' | 'approved' | 'rejected'>().notNull(),
   message: text('message'),
   createdAt: timestamp('created_at').defaultNow().notNull()
 });
@@ -52,7 +53,8 @@ export const insertPropertySchema = createInsertSchema(properties).omit({
   createdAt: true,
   pageViews: true,
   uniqueVisitors: true,
-  submissionCount: true
+  submissionCount: true,
+  rent: true
 });
 
 export const insertApplicationSchema = createInsertSchema(applications).omit({
