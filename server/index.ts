@@ -56,21 +56,33 @@ const startServer = async (initialPort: number) => {
     });
 
     if (process.env.NODE_ENV === "production") {
-      // Serve static files from the correct directory in production
-      const distPath = path.resolve(process.cwd(), "dist/public");
-      console.log('Serving static files from:', distPath);
+      // In production, we need to serve the static files from the dist/public directory
+      // Using process.cwd() to get the absolute path from the project root
+      const distPath = path.join(process.cwd(), "dist/public");
+      console.log('[Static Files] Looking for static files in:', distPath);
+      console.log('[Static Files] Current directory:', process.cwd());
+      console.log('[Static Files] Directory exists:', fs.existsSync(distPath));
 
       if (!fs.existsSync(distPath)) {
+        console.error('[Static Files] Build directory not found:', distPath);
         throw new Error(
           `Could not find the build directory: ${distPath}, make sure to build the client first`,
         );
       }
 
+      // Serve static files
       app.use(express.static(distPath));
 
-      // fall through to index.html if the file doesn't exist
-      app.use("*", (_req, res) => {
-        res.sendFile(path.resolve(distPath, "index.html"));
+      // Handle all other routes by serving index.html
+      app.get('*', (req, res) => {
+        const indexPath = path.join(distPath, "index.html");
+        console.log('[Static Files] Serving index.html for path:', req.path);
+        console.log('[Static Files] From location:', indexPath);
+        if (!fs.existsSync(indexPath)) {
+          console.error('[Static Files] index.html not found at:', indexPath);
+          return res.status(404).send('Application not properly built');
+        }
+        res.sendFile(indexPath);
       });
     } else {
       await setupVite(app, server);
