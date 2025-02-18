@@ -14,6 +14,31 @@ const USERS_PREFIX = "users:";
 const PROPERTIES_PREFIX = "properties:";
 const APPLICATIONS_PREFIX = "applications:";
 
+// Helper function to validate User object
+function isValidUser(obj: any): obj is User {
+  return (
+    obj &&
+    typeof obj === 'object' &&
+    'id' in obj &&
+    'username' in obj &&
+    'password' in obj &&
+    'type' in obj &&
+    'name' in obj &&
+    'email' in obj
+  );
+}
+
+// Helper function to validate Property object
+function isValidProperty(obj: any): obj is Property {
+  return obj && typeof obj === 'object' && 'id' in obj;
+}
+
+// Helper function to validate Application object
+function isValidApplication(obj: any): obj is Application {
+  return obj && typeof obj === 'object' && 'id' in obj;
+}
+
+
 export interface IStorage {
   sessionStore: session.Store;
   // User operations
@@ -56,31 +81,35 @@ export class ReplitStorage implements IStorage {
   private async ensureInitialized() {
     if (!this.initialized) {
       try {
+        console.log("[Storage Debug] Initializing storage...");
         const keys = await db.list();
-        // Handle the response safely
         const keyArray = Array.isArray(keys) ? keys : [];
         for (const key of keyArray) {
+          console.log("[Storage Debug] Processing key:", key);
           if (key.startsWith(USERS_PREFIX)) {
             const id = parseInt(key.split(':')[1]);
             if (!isNaN(id)) {
               this.lastIds.users = Math.max(this.lastIds.users, id);
+              console.log("[Storage Debug] Updated users lastId:", this.lastIds.users);
             }
           } else if (key.startsWith(PROPERTIES_PREFIX)) {
             const id = parseInt(key.split(':')[1]);
             if (!isNaN(id)) {
               this.lastIds.properties = Math.max(this.lastIds.properties, id);
+              console.log("[Storage Debug] Updated properties lastId:", this.lastIds.properties);
             }
           } else if (key.startsWith(APPLICATIONS_PREFIX)) {
             const id = parseInt(key.split(':')[1]);
             if (!isNaN(id)) {
               this.lastIds.applications = Math.max(this.lastIds.applications, id);
+              console.log("[Storage Debug] Updated applications lastId:", this.lastIds.applications);
             }
           }
         }
         this.initialized = true;
+        console.log("[Storage Debug] Storage initialized with lastIds:", this.lastIds);
       } catch (error) {
-        console.error('Failed to initialize storage:', error);
-        // Continue with default IDs if initialization fails
+        console.error('[Storage Debug] Failed to initialize storage:', error);
         this.initialized = true;
       }
     }
@@ -95,53 +124,75 @@ export class ReplitStorage implements IStorage {
   // User operations with proper type handling
   async getUser(id: number): Promise<User | undefined> {
     try {
-      const result = await db.get(`${USERS_PREFIX}${id}`);
-      if (result && typeof result === 'object' && 'id' in result) {
-        return result as User;
+      console.log("[Storage Debug] Getting user with id:", id);
+      const key = `${USERS_PREFIX}${id}`;
+      const result = await db.get(key);
+      console.log("[Storage Debug] Raw user data:", result);
+
+      if (isValidUser(result)) {
+        console.log("[Storage Debug] Valid user found:", result.username);
+        return result;
       }
+
+      console.log("[Storage Debug] Invalid or missing user data");
       return undefined;
     } catch (error) {
-      console.error('Failed to get user:', error);
+      console.error('[Storage Debug] Failed to get user:', error);
       return undefined;
     }
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
     try {
+      console.log("[Storage Debug] Getting user by username:", username);
       const keys = await db.list(USERS_PREFIX);
       const keyArray = Array.isArray(keys) ? keys : [];
+      console.log("[Storage Debug] Found user keys:", keyArray);
 
       for (const key of keyArray) {
         const result = await db.get(key);
+        console.log("[Storage Debug] Checking user data:", result);
+
         if (
           result &&
           typeof result === 'object' &&
           'username' in result &&
           result.username === username
         ) {
+          console.log("[Storage Debug] Found matching user:", username);
           return result as User;
         }
       }
+      console.log("[Storage Debug] No user found with username:", username);
       return undefined;
     } catch (error) {
-      console.error('Failed to get user by username:', error);
+      console.error('[Storage Debug] Failed to get user by username:', error);
       return undefined;
     }
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = await this.getNextId('users');
-    const user: User = {
-      id,
-      ...insertUser,
-      createdAt: new Date()
-    };
-    await db.set(`${USERS_PREFIX}${id}`, user);
-    return user;
+    try {
+      console.log("[Storage Debug] Creating new user:", insertUser.username);
+      const id = await this.getNextId('users');
+      const user: User = {
+        id,
+        ...insertUser,
+        createdAt: new Date()
+      };
+      const key = `${USERS_PREFIX}${id}`;
+      await db.set(key, user);
+      console.log("[Storage Debug] Successfully created user:", user);
+      return user;
+    } catch (error) {
+      console.error('[Storage Debug] Failed to create user:', error);
+      throw error;
+    }
   }
 
   async clearTestAccounts(): Promise<void> {
     try {
+      console.log("[Storage Debug] Clearing test accounts...");
       const keys = await db.list(USERS_PREFIX);
       const keyArray = Array.isArray(keys) ? keys : [];
 
@@ -154,10 +205,12 @@ export class ReplitStorage implements IStorage {
           //Check if the account exists before deleting.
           const exists = await db.get(key)
           if (exists) {
+            console.log("[Storage Debug] Deleting test account:", user.username);
             await db.delete(key);
           }
         }
       }
+      console.log("[Storage Debug] Test accounts cleared.");
     } catch (error) {
       console.error('Failed to clear test accounts:', error);
     }
@@ -166,19 +219,29 @@ export class ReplitStorage implements IStorage {
 
   // Property operations with proper type handling
   async createProperty(insertProperty: Omit<Property, "id" | "createdAt">): Promise<Property> {
-    const id = await this.getNextId('properties');
-    const property: Property = {
-      id,
-      ...insertProperty,
-      createdAt: new Date(),
-      imageUrl: insertProperty.imageUrl || undefined
-    };
-    await db.set(`${PROPERTIES_PREFIX}${id}`, property);
-    return property;
+    try {
+      console.log("[Storage Debug] Creating new property:", insertProperty.address);
+      const id = await this.getNextId('properties');
+      const property: Property = {
+        id,
+        ...insertProperty,
+        createdAt: new Date(),
+        imageUrl: insertProperty.imageUrl || undefined,
+        pageViews: 0,
+        submissionCount: 0
+      };
+      await db.set(`${PROPERTIES_PREFIX}${id}`, property);
+      console.log("[Storage Debug] Successfully created property:", property);
+      return property;
+    } catch (error) {
+      console.error('[Storage Debug] Failed to create property:', error);
+      throw error;
+    }
   }
 
   async getAllProperties(): Promise<Property[]> {
     try {
+      console.log("[Storage Debug] Getting all properties...");
       const keys = await db.list(PROPERTIES_PREFIX);
       const keyArray = Array.isArray(keys) ? keys : [];
 
@@ -186,17 +249,21 @@ export class ReplitStorage implements IStorage {
         keyArray.map(async key => {
           try {
             const result = await db.get(key);
-            if (result && typeof result === 'object' && 'id' in result) {
-              return result as Property;
+            console.log("[Storage Debug] Checking property data:", result);
+            if (isValidProperty(result)) {
+              return result;
             }
             return null;
-          } catch {
+          } catch (error) {
+            console.error("[Storage Debug] Error getting property:", error);
             return null;
           }
         })
       );
 
-      return properties.filter((p): p is Property => p !== null);
+      const validProperties = properties.filter((p): p is Property => p !== null);
+      console.log("[Storage Debug] Retrieved properties:", validProperties);
+      return validProperties;
     } catch (error) {
       console.error('Failed to get all properties:', error);
       return [];
@@ -205,23 +272,30 @@ export class ReplitStorage implements IStorage {
 
   async getPropertyById(id: number): Promise<Property | undefined> {
     try {
-      const result = await db.get(`${PROPERTIES_PREFIX}${id}`);
-      if (result && typeof result === 'object' && 'id' in result) {
-        return result as Property;
+      console.log("[Storage Debug] Getting property with id:", id);
+      const key = `${PROPERTIES_PREFIX}${id}`;
+      const result = await db.get(key);
+      console.log("[Storage Debug] Raw property data:", result);
+      if (isValidProperty(result)) {
+        console.log("[Storage Debug] Valid property found:", result);
+        return result;
       }
+      console.log("[Storage Debug] Invalid or missing property data");
       return undefined;
     } catch (error) {
-      console.error('Failed to get property by id:', error);
+      console.error('[Storage Debug] Failed to get property by id:', error);
       return undefined;
     }
   }
 
   async incrementPropertyViews(id: number): Promise<void> {
     try {
+      console.log("[Storage Debug] Incrementing views for property id:", id);
       const property = await this.getPropertyById(id);
       if (property) {
         property.pageViews = (property.pageViews || 0) + 1;
         await db.set(`${PROPERTIES_PREFIX}${id}`, property);
+        console.log("[Storage Debug] Property views incremented:", property.pageViews);
       }
     } catch (error) {
       console.error('Failed to increment property views:', error);
@@ -230,10 +304,12 @@ export class ReplitStorage implements IStorage {
 
   async incrementPropertySubmissions(id: number): Promise<void> {
     try {
+      console.log("[Storage Debug] Incrementing submissions for property id:", id);
       const property = await this.getPropertyById(id);
       if (property) {
         property.submissionCount = (property.submissionCount || 0) + 1;
         await db.set(`${PROPERTIES_PREFIX}${id}`, property);
+        console.log("[Storage Debug] Property submissions incremented:", property.submissionCount);
       }
     } catch (error) {
       console.error('Failed to increment property submissions:', error);
@@ -242,19 +318,28 @@ export class ReplitStorage implements IStorage {
 
   // Application operations with proper type handling
   async createApplication(insertApplication: Omit<Application, "id" | "createdAt">): Promise<Application> {
-    const id = await this.getNextId('applications');
-    const application: Application = {
-      id,
-      ...insertApplication,
-      createdAt: new Date(),
-      message: insertApplication.message || undefined
-    };
-    await db.set(`${APPLICATIONS_PREFIX}${id}`, application);
-    return application;
+    try {
+      console.log("[Storage Debug] Creating new application:", insertApplication);
+      const id = await this.getNextId('applications');
+      const application: Application = {
+        id,
+        ...insertApplication,
+        createdAt: new Date(),
+        message: insertApplication.message || undefined,
+        status: 'pending'
+      };
+      await db.set(`${APPLICATIONS_PREFIX}${id}`, application);
+      console.log("[Storage Debug] Successfully created application:", application);
+      return application;
+    } catch (error) {
+      console.error('[Storage Debug] Failed to create application:', error);
+      throw error;
+    }
   }
 
   async getTenantApplications(tenantId: number): Promise<Application[]> {
     try {
+      console.log("[Storage Debug] Getting applications for tenant id:", tenantId);
       const keys = await db.list(APPLICATIONS_PREFIX);
       const keyArray = Array.isArray(keys) ? keys : [];
 
@@ -262,22 +347,21 @@ export class ReplitStorage implements IStorage {
         keyArray.map(async key => {
           try {
             const result = await db.get(key);
-            if (
-              result &&
-              typeof result === 'object' &&
-              'tenantId' in result &&
-              result.tenantId === tenantId
-            ) {
-              return result as Application;
+            console.log("[Storage Debug] Checking application data:", result);
+            if (isValidApplication(result) && result.tenantId === tenantId) {
+              return result;
             }
             return null;
-          } catch {
+          } catch (error) {
+            console.error("[Storage Debug] Error getting application:", error);
             return null;
           }
         })
       );
 
-      return applications.filter((app): app is Application => app !== null);
+      const validApplications = applications.filter((app): app is Application => app !== null);
+      console.log("[Storage Debug] Retrieved applications:", validApplications);
+      return validApplications;
     } catch (error) {
       console.error('Failed to get tenant applications:', error);
       return [];
@@ -286,6 +370,7 @@ export class ReplitStorage implements IStorage {
 
   async getLandlordApplications(landlordId: number): Promise<Application[]> {
     try {
+      console.log("[Storage Debug] Getting applications for landlord id:", landlordId);
       // First get all properties owned by this landlord
       const propertyKeys = await db.list(PROPERTIES_PREFIX);
       const keyArray = Array.isArray(propertyKeys) ? propertyKeys : [];
@@ -294,16 +379,13 @@ export class ReplitStorage implements IStorage {
         keyArray.map(async key => {
           try {
             const result = await db.get(key);
-            if (
-              result &&
-              typeof result === 'object' &&
-              'landlordId' in result &&
-              result.landlordId === landlordId
-            ) {
-              return result as Property;
+            console.log("[Storage Debug] Checking property data:", result);
+            if (isValidProperty(result) && result.landlordId === landlordId) {
+              return result;
             }
             return null;
-          } catch {
+          } catch (error) {
+            console.error("[Storage Debug] Error getting property:", error);
             return null;
           }
         })
@@ -321,22 +403,21 @@ export class ReplitStorage implements IStorage {
         appKeyArray.map(async key => {
           try {
             const result = await db.get(key);
-            if (
-              result &&
-              typeof result === 'object' &&
-              'propertyId' in result &&
-              landlordPropertyIds.includes(result.propertyId)
-            ) {
-              return result as Application;
+            console.log("[Storage Debug] Checking application data:", result);
+            if (isValidApplication(result) && landlordPropertyIds.includes(result.propertyId)) {
+              return result;
             }
             return null;
-          } catch {
+          } catch (error) {
+            console.error("[Storage Debug] Error getting application:", error);
             return null;
           }
         })
       );
 
-      return applications.filter((app): app is Application => app !== null);
+      const validApplications = applications.filter((app): app is Application => app !== null);
+      console.log("[Storage Debug] Retrieved applications:", validApplications);
+      return validApplications;
     } catch (error) {
       console.error('Failed to get landlord applications:', error);
       return [];
@@ -345,16 +426,21 @@ export class ReplitStorage implements IStorage {
 
   async bulkUpdateApplications(applicationIds: number[], status: 'approved' | 'rejected'): Promise<void> {
     try {
+      console.log("[Storage Debug] Bulk updating applications:", applicationIds, "to status:", status);
       for (const id of applicationIds) {
         const key = `${APPLICATIONS_PREFIX}${id}`;
         const application = await db.get(key);
-        if (application && typeof application === 'object' && 'id' in application) {
+        if (isValidApplication(application)) {
           await db.set(key, {
             ...application,
             status
           });
+          console.log("[Storage Debug] Updated application:", application.id, "status:", status);
+        } else {
+          console.warn("[Storage Debug] Application not found for id:", id);
         }
       }
+      console.log("[Storage Debug] Bulk application update complete.");
     } catch (error) {
       console.error('Failed to bulk update applications:', error);
       throw new Error('Failed to update applications');
@@ -362,8 +448,10 @@ export class ReplitStorage implements IStorage {
   }
 
   async hashPassword(password: string) {
+    console.log("[Storage Debug] Hashing password for user");
     // Special cases for test accounts
     if (password === "testlandlord" || password === "testtenant" || password === "test1") {
+      console.log("[Storage Debug] Using test account password");
       return password;
     }
 
@@ -373,18 +461,26 @@ export class ReplitStorage implements IStorage {
   }
 
   async comparePasswords(supplied: string, stored: string) {
+    console.log("[Storage Debug] Comparing passwords");
     // Special cases for test accounts
     if ((stored === "testlandlord" && supplied === "testlandlord") ||
         (stored === "testtenant" && supplied === "testtenant") ||
         (stored === "test1" && supplied === "test1")) {
+      console.log("[Storage Debug] Test account password match");
       return true;
     }
 
-    // Regular password comparison for other accounts
-    const [hashed, salt] = stored.split(".");
-    const hashedBuf = Buffer.from(hashed, "hex");
-    const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
-    return timingSafeEqual(hashedBuf, suppliedBuf);
+    try {
+      const [hashed, salt] = stored.split(".");
+      const hashedBuf = Buffer.from(hashed, "hex");
+      const suppliedBuf = (await scryptAsync(supplied, salt, 64)) as Buffer;
+      const match = timingSafeEqual(hashedBuf, suppliedBuf);
+      console.log("[Storage Debug] Password comparison result:", match);
+      return match;
+    } catch (error) {
+      console.error('[Storage Debug] Password comparison error:', error);
+      return false;
+    }
   }
 }
 

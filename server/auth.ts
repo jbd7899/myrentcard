@@ -74,6 +74,16 @@ export function setupAuth(app: Express) {
     }
   });
 
+  // Add authentication debugging middleware
+  app.use((req, res, next) => {
+    console.log(`[Auth Debug] ${req.method} ${req.path}`);
+    console.log(`[Auth Debug] isAuthenticated: ${req.isAuthenticated()}`);
+    if (req.user) {
+      console.log(`[Auth Debug] User: ${JSON.stringify(req.user)}`);
+    }
+    next();
+  });
+
   // Auth routes
   app.post("/api/register", async (req, res, next) => {
     try {
