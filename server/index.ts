@@ -1,11 +1,18 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes.js";
-import { setupVite, serveStatic, log } from "./vite.js";
+import { setupVite } from "./vite.js";
+import path, { dirname } from "path";
+import { fileURLToPath } from "url";
+import fs from "fs";
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
   const path = req.path;
@@ -29,7 +36,7 @@ app.use((req, res, next) => {
         logLine = logLine.slice(0, 79) + "…";
       }
 
-      log(logLine);
+      console.log(logLine);
     }
   });
 
@@ -40,36 +47,48 @@ const startServer = async (initialPort: number) => {
   try {
     const server = await registerRoutes(app);
 
+    // Error handling middleware
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
       res.status(status).json({ message });
-      throw err;
+      console.error('Server error:', err);
     });
 
-    if (app.get("env") === "development") {
-      await setupVite(app, server);
-    } else {
-      // Update the static file serving path to match Vite's output directory
-      app.use(express.static('dist/public'));
-      app.get('*', (req, res) => {
-        res.sendFile('dist/public/index.html', { root: '.' });
+    if (process.env.NODE_ENV === "production") {
+      // Serve static files from the correct directory in production
+      const distPath = path.resolve(process.cwd(), "dist/public");
+      console.log('Serving static files from:', distPath);
+
+      if (!fs.existsSync(distPath)) {
+        throw new Error(
+          `Could not find the build directory: ${distPath}, make sure to build the client first`,
+        );
+      }
+
+      app.use(express.static(distPath));
+
+      // fall through to index.html if the file doesn't exist
+      app.use("*", (_req, res) => {
+        res.sendFile(path.resolve(distPath, "index.html"));
       });
+    } else {
+      await setupVite(app, server);
     }
 
     return new Promise((resolve, reject) => {
       const tryPort = (port: number) => {
         server.listen(port, "0.0.0.0")
-          .on('error', (err: any) => {
+          .once('error', (err: any) => {
             if (err.code === 'EADDRINUSE') {
-              log(`Port ${port} is in use, trying ${port + 1}`);
+              console.log(`Port ${port} is in use, trying ${port + 1}`);
               tryPort(port + 1);
             } else {
               reject(err);
             }
           })
-          .on('listening', () => {
-            log(`serving on port ${port}`);
+          .once('listening', () => {
+            console.log(`Server is running on port ${port}`);
             resolve(server);
           });
       };
@@ -77,14 +96,16 @@ const startServer = async (initialPort: number) => {
       tryPort(initialPort);
     });
   } catch (error) {
-    log(`Error during server startup: ${error}`);
+    console.error(`Error during server startup: ${error}`);
     throw error;
   }
 };
 
+// Start the server
 (async () => {
   try {
-    const PORT = parseInt(process.env.PORT || "5000", 10);
+    // Use PORT from environment variable, default to 5000 for production
+    const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
     await startServer(PORT);
   } catch (error) {
     console.error('Failed to start server:', error);
