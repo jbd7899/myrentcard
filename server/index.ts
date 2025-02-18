@@ -56,9 +56,8 @@ const startServer = async (initialPort: number) => {
     });
 
     if (process.env.NODE_ENV === "production") {
-      // In production, we need to serve the static files from the dist/public directory
-      // Using process.cwd() to get the absolute path from the project root
-      const distPath = path.join(process.cwd(), "dist/public");
+      // Update path to dist/client instead of dist/public
+      const distPath = path.join(process.cwd(), "dist/client");
       console.log('[Static Files] Looking for static files in:', distPath);
       console.log('[Static Files] Current directory:', process.cwd());
       console.log('[Static Files] Directory exists:', fs.existsSync(distPath));
