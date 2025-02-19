@@ -18,7 +18,6 @@ describe("Database Version Control", () => {
     const version = {
       version: "1.0.0",
       description: "Initial schema",
-      appliedAt: new Date(),
       isActive: true,
     };
 
@@ -32,8 +31,8 @@ describe("Database Version Control", () => {
 
   it("should list all versions in descending order", async () => {
     const versions = [
-      { version: "1.0.0", description: "Initial schema", appliedAt: new Date(2024, 1, 1), isActive: false },
-      { version: "1.1.0", description: "Added user profiles", appliedAt: new Date(2024, 1, 2), isActive: true },
+      { version: "1.0.0", description: "Initial schema", isActive: false },
+      { version: "1.1.0", description: "Added user profiles", isActive: true },
     ];
 
     for (const version of versions) {
@@ -48,8 +47,8 @@ describe("Database Version Control", () => {
 
   it("should rollback to a specific version", async () => {
     const versions = [
-      { version: "1.0.0", description: "Initial schema", appliedAt: new Date(2024, 1, 1), isActive: false },
-      { version: "1.1.0", description: "Added user profiles", appliedAt: new Date(2024, 1, 2), isActive: true },
+      { version: "1.0.0", description: "Initial schema", isActive: false },
+      { version: "1.1.0", description: "Added user profiles", isActive: true },
     ];
 
     for (const version of versions) {
@@ -57,7 +56,7 @@ describe("Database Version Control", () => {
     }
 
     await storage.rollbackToVersion("1.0.0");
-    
+
     const currentVersion = await storage.getCurrentVersion();
     expect(currentVersion?.version).toBe("1.0.0");
     expect(currentVersion?.isActive).toBe(true);

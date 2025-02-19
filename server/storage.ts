@@ -250,14 +250,15 @@ export class DatabaseStorage implements IStorage {
   }
 
   async addVersion(version: InsertDatabaseVersion): Promise<DatabaseVersion> {
+    // First, deactivate all existing versions
     await db
       .update(databaseVersions)
-      .set({ isActive: false })
-      .where(eq(databaseVersions.isActive, true));
+      .set({ isActive: false });
 
+    // Then insert new version as active
     const [newVersion] = await db
       .insert(databaseVersions)
-      .values(version)
+      .values({ ...version, isActive: true })
       .returning();
 
     return newVersion;
@@ -271,14 +272,21 @@ export class DatabaseStorage implements IStorage {
   }
 
   async rollbackToVersion(version: string): Promise<void> {
+    // First deactivate all versions
     await db
       .update(databaseVersions)
       .set({ isActive: false });
 
-    await db
+    // Then activate the specified version
+    const result = await db
       .update(databaseVersions)
       .set({ isActive: true })
-      .where(eq(databaseVersions.version, version));
+      .where(eq(databaseVersions.version, version))
+      .returning();
+
+    if (result.length === 0) {
+      throw new Error(`Version ${version} not found`);
+    }
   }
 }
 
