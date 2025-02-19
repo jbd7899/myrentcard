@@ -43,6 +43,18 @@ app.use((req, res, next) => {
   next();
 });
 
+// Debug route to check environment and paths
+app.get("/debug", (req, res) => {
+  res.json({
+    env: process.env.NODE_ENV,
+    cwd: process.cwd(),
+    distPath: path.join(process.cwd(), "dist/public"),
+    distExists: fs.existsSync(path.join(process.cwd(), "dist/public")),
+    nodeVersion: process.version,
+    uptime: process.uptime()
+  });
+});
+
 const startServer = async (initialPort: number) => {
   try {
     const server = await registerRoutes(app);
@@ -56,7 +68,8 @@ const startServer = async (initialPort: number) => {
     });
 
     if (process.env.NODE_ENV === "production") {
-      const distPath = path.join(process.cwd(), "dist/client");
+      const distPath = path.join(process.cwd(), "dist/public");
+      console.log("[Static Files] Production mode detected");
       console.log("[Static Files] Looking for static files in:", distPath);
       console.log("[Static Files] Current directory:", process.cwd());
       console.log("[Static Files] Directory exists:", fs.existsSync(distPath));
@@ -68,12 +81,28 @@ const startServer = async (initialPort: number) => {
         );
       }
 
+      // Serve static files from the assets directory
+      app.use("/assets", express.static(path.join(distPath, "assets")));
+
+      // Serve other static files from the root
       app.use(express.static(distPath));
 
+      // Add a route to verify static file serving
+      app.get("/static-check", (req, res) => {
+        const files = fs.readdirSync(distPath);
+        res.json({
+          distExists: fs.existsSync(distPath),
+          files: files,
+          distPath: distPath
+        });
+      });
+
+      // Handle all other routes by serving index.html
       app.get("*", (req, res) => {
         const indexPath = path.join(distPath, "index.html");
-        console.log("[Static Files] Serving index.html for path:", req.path);
+        console.log("[Static Files] Serving index.html for:", req.path);
         console.log("[Static Files] From location:", indexPath);
+
         if (!fs.existsSync(indexPath)) {
           console.error("[Static Files] index.html not found at:", indexPath);
           return res.status(404).send("Application not properly built");
@@ -81,44 +110,44 @@ const startServer = async (initialPort: number) => {
         res.sendFile(indexPath);
       });
     } else {
+      console.log("[Development] Setting up Vite middleware");
       await setupVite(app, server);
     }
 
-    let currentPort = initialPort;
-    const maxRetries = 10;
+    return new Promise((resolve, reject) => {
+      const tryPort = (port: number) => {
+        server
+          .listen(port, "0.0.0.0")
+          .once("error", (err: any) => {
+            if (err.code === "EADDRINUSE") {
+              console.log(`Port ${port} is in use, trying ${port + 1}`);
+              tryPort(port + 1);
+            } else {
+              reject(err);
+            }
+          })
+          .once("listening", () => {
+            console.log(`Server is running on port ${port}`);
+            resolve(server);
+          });
+      };
 
-    const tryListen = (port: number, retryCount = 0): Promise<import('http').Server> => {
-      return new Promise((resolve, reject) => {
-        const onError = (err: any) => {
-          if (err.code === 'EADDRINUSE' && retryCount < maxRetries) {
-            console.log(`Port ${port} is in use, trying ${port + 1}`);
-            server.removeListener('error', onError);
-            tryListen(port + 1, retryCount + 1)
-              .then(resolve)
-              .catch(reject);
-          } else {
-            reject(err);
-          }
-        };
-
-        server.once('error', onError);
-
-        server.listen(port, "0.0.0.0", () => {
-          console.log(`Server is running on port ${port}`);
-          resolve(server);
-        });
-      });
-    };
-
-    return tryListen(currentPort);
+      tryPort(initialPort);
+    });
   } catch (error) {
     console.error(`Error during server startup: ${error}`);
     throw error;
   }
 };
 
+// Start the server
 (async () => {
   try {
+    console.log('Starting server with configuration:');
+    console.log('PORT:', process.env.PORT);
+    console.log('NODE_ENV:', process.env.NODE_ENV);
+
+    // Use PORT from environment variable, default to 5000 for production
     const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
     await startServer(PORT);
   } catch (error) {
