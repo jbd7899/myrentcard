@@ -52,18 +52,18 @@ const startServer = async (initialPort: number) => {
       const status = err.status || err.statusCode || 500;
       const message = err.message || "Internal Server Error";
       res.status(status).json({ message });
-      console.error('Server error:', err);
+      console.error("Server error:", err);
     });
 
     if (process.env.NODE_ENV === "production") {
       // Update path to dist/client instead of dist/public
       const distPath = path.join(process.cwd(), "dist/client");
-      console.log('[Static Files] Looking for static files in:', distPath);
-      console.log('[Static Files] Current directory:', process.cwd());
-      console.log('[Static Files] Directory exists:', fs.existsSync(distPath));
+      console.log("[Static Files] Looking for static files in:", distPath);
+      console.log("[Static Files] Current directory:", process.cwd());
+      console.log("[Static Files] Directory exists:", fs.existsSync(distPath));
 
       if (!fs.existsSync(distPath)) {
-        console.error('[Static Files] Build directory not found:', distPath);
+        console.error("[Static Files] Build directory not found:", distPath);
         throw new Error(
           `Could not find the build directory: ${distPath}, make sure to build the client first`,
         );
@@ -73,13 +73,13 @@ const startServer = async (initialPort: number) => {
       app.use(express.static(distPath));
 
       // Handle all other routes by serving index.html
-      app.get('*', (req, res) => {
+      app.get("*", (req, res) => {
         const indexPath = path.join(distPath, "index.html");
-        console.log('[Static Files] Serving index.html for path:', req.path);
-        console.log('[Static Files] From location:', indexPath);
+        console.log("[Static Files] Serving index.html for path:", req.path);
+        console.log("[Static Files] From location:", indexPath);
         if (!fs.existsSync(indexPath)) {
-          console.error('[Static Files] index.html not found at:', indexPath);
-          return res.status(404).send('Application not properly built');
+          console.error("[Static Files] index.html not found at:", indexPath);
+          return res.status(404).send("Application not properly built");
         }
         res.sendFile(indexPath);
       });
@@ -89,16 +89,17 @@ const startServer = async (initialPort: number) => {
 
     return new Promise((resolve, reject) => {
       const tryPort = (port: number) => {
-        server.listen(port, "0.0.0.0")
-          .once('error', (err: any) => {
-            if (err.code === 'EADDRINUSE') {
+        server
+          .listen(port, "0.0.0.0")
+          .once("error", (err: any) => {
+            if (err.code === "EADDRINUSE") {
               console.log(`Port ${port} is in use, trying ${port + 1}`);
               tryPort(port + 1);
             } else {
               reject(err);
             }
           })
-          .once('listening', () => {
+          .once("listening", () => {
             console.log(`Server is running on port ${port}`);
             resolve(server);
           });
@@ -119,7 +120,7 @@ const startServer = async (initialPort: number) => {
     const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
     await startServer(PORT);
   } catch (error) {
-    console.error('Failed to start server:', error);
+    console.error("Failed to start server:", error);
     process.exit(1);
   }
 })();

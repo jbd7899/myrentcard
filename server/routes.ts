@@ -26,15 +26,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
     // Check if test account already exists
     const existingTestUser = await storage.getUserByUsername("landlordtest");
+
+    // Enhanced health check endpoint that also handles static files
+    app.get("/", (req, res) => {
+      // Handle health check requests
+      if (req.headers['x-replit-healthcheck']) {
+        return res.status(200).json({ status: "ok" });
+      }
+
+      // For non-health check requests in production, serve static files
+      if (process.env.NODE_ENV === 'production') {
+        const distPath = path.resolve(__dirname, "public");
+        if (req.accepts('html')) {
+          return res.sendFile(path.resolve(distPath, "index.html"));
+        }
+      }
+
+      // Default response
+      return res.status(200).json({ status: "ok" });
+    });
+
     if (!existingTestUser) {
       console.log("[Debug] No test account found, creating test accounts...");
-
-
-  // Health check endpoint
-  app.get("/", (_req, res) => {
-    res.status(200).json({ status: "ok" });
-  });
-
 
       // Create test landlord account
       const testLandlord = await storage.createUser({
