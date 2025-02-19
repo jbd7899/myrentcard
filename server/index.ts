@@ -56,7 +56,6 @@ const startServer = async (initialPort: number) => {
     });
 
     if (process.env.NODE_ENV === "production") {
-      // Update path to dist/client instead of dist/public
       const distPath = path.join(process.cwd(), "dist/client");
       console.log("[Static Files] Looking for static files in:", distPath);
       console.log("[Static Files] Current directory:", process.cwd());
@@ -69,10 +68,8 @@ const startServer = async (initialPort: number) => {
         );
       }
 
-      // Serve static files
       app.use(express.static(distPath));
 
-      // Handle all other routes by serving index.html
       app.get("*", (req, res) => {
         const indexPath = path.join(distPath, "index.html");
         console.log("[Static Files] Serving index.html for path:", req.path);
@@ -87,36 +84,41 @@ const startServer = async (initialPort: number) => {
       await setupVite(app, server);
     }
 
-    return new Promise((resolve, reject) => {
-      const tryPort = (port: number) => {
-        server
-          .listen(port, "0.0.0.0")
-          .once("error", (err: any) => {
-            if (err.code === "EADDRINUSE") {
-              console.log(`Port ${port} is in use, trying ${port + 1}`);
-              tryPort(port + 1);
-            } else {
-              reject(err);
-            }
-          })
-          .once("listening", () => {
-            console.log(`Server is running on port ${port}`);
-            resolve(server);
-          });
-      };
+    let currentPort = initialPort;
+    const maxRetries = 10;
 
-      tryPort(initialPort);
-    });
+    const tryListen = (port: number, retryCount = 0): Promise<import('http').Server> => {
+      return new Promise((resolve, reject) => {
+        const onError = (err: any) => {
+          if (err.code === 'EADDRINUSE' && retryCount < maxRetries) {
+            console.log(`Port ${port} is in use, trying ${port + 1}`);
+            server.removeListener('error', onError);
+            tryListen(port + 1, retryCount + 1)
+              .then(resolve)
+              .catch(reject);
+          } else {
+            reject(err);
+          }
+        };
+
+        server.once('error', onError);
+
+        server.listen(port, "0.0.0.0", () => {
+          console.log(`Server is running on port ${port}`);
+          resolve(server);
+        });
+      });
+    };
+
+    return tryListen(currentPort);
   } catch (error) {
     console.error(`Error during server startup: ${error}`);
     throw error;
   }
 };
 
-// Start the server
 (async () => {
   try {
-    // Use PORT from environment variable, default to 5000 for production
     const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
     await startServer(PORT);
   } catch (error) {
