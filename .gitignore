@@ -28,3 +28,11 @@ coverage/
 # Cache
 .cache/
 .npm
+# GitHub specific
+.github/workflows/
+.git/
+# Replit specific
+.config/
+.upm/
+.breakpoints
+.replit.nix
