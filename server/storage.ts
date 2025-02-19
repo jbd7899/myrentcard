@@ -7,9 +7,11 @@ import type {
   ScreeningPage, 
   ScreeningSubmission,
   InsertScreeningPage,
-  InsertScreeningSubmission 
+  InsertScreeningSubmission,
+  DatabaseVersion,
+  InsertDatabaseVersion 
 } from "@shared/schema";
-import { users, properties, applications, screeningPages, screeningSubmissions } from "@shared/schema";
+import { users, properties, applications, screeningPages, screeningSubmissions, databaseVersions } from "@shared/schema";
 import { db } from "./db";
 import { eq, inArray, sql } from "drizzle-orm";
 import session from "express-session";
@@ -50,19 +52,22 @@ export interface IStorage {
   hashPassword(password: string): Promise<string>;
   comparePasswords(supplied: string, stored: string): Promise<boolean>;
   getScreeningPageByUrlId(urlId: string): Promise<ScreeningPage | undefined>;
+  // Add new version control methods
+  getCurrentVersion(): Promise<DatabaseVersion | undefined>;
+  addVersion(version: InsertDatabaseVersion): Promise<DatabaseVersion>;
+  listVersions(): Promise<DatabaseVersion[]>;
+  rollbackToVersion(version: string): Promise<void>;
 }
 
 export class DatabaseStorage implements IStorage {
   sessionStore: session.Store;
 
   constructor() {
-    // Enhanced session store configuration
     this.sessionStore = new PostgresSessionStore({
       pool,
       createTableIfMissing: true,
-      tableName: 'session', // Explicit table name
-      // Pruning configuration
-      pruneSessionInterval: 60 * 15, // Prune expired sessions every 15 minutes
+      tableName: 'session',
+      pruneSessionInterval: 60 * 15,
     });
   }
 
@@ -191,7 +196,6 @@ export class DatabaseStorage implements IStorage {
   async createScreeningSubmission(submission: InsertScreeningSubmission): Promise<ScreeningSubmission> {
     const [screeningSubmission] = await db.insert(screeningSubmissions).values(submission).returning();
 
-    // Update submission count on the screening page
     await db
       .update(screeningPages)
       .set({ submissionCount: sql`${screeningPages.submissionCount} + 1` })
@@ -215,21 +219,17 @@ export class DatabaseStorage implements IStorage {
   }
 
   async hashPassword(password: string): Promise<string> {
-    // For test accounts, return the password as-is
     if (password === "test1") {
       return password;
     }
-    // Use the existing implementation from auth.ts
     return password;
   }
 
   async comparePasswords(supplied: string, stored: string): Promise<boolean> {
-    // For test accounts, do direct comparison
     if ((stored === "test1" && supplied === "test1") ||
         (stored === "testtenant1" && supplied === "test1")) {
       return true;
     }
-    // Use the existing implementation from auth.ts
     return supplied === stored;
   }
   async getScreeningPageByUrlId(urlId: string): Promise<ScreeningPage | undefined> {
@@ -238,6 +238,47 @@ export class DatabaseStorage implements IStorage {
       .from(screeningPages)
       .where(eq(screeningPages.urlId, urlId));
     return page;
+  }
+  async getCurrentVersion(): Promise<DatabaseVersion | undefined> {
+    const [version] = await db
+      .select()
+      .from(databaseVersions)
+      .where(eq(databaseVersions.isActive, true))
+      .orderBy(sql`${databaseVersions.appliedAt} DESC`)
+      .limit(1);
+    return version;
+  }
+
+  async addVersion(version: InsertDatabaseVersion): Promise<DatabaseVersion> {
+    await db
+      .update(databaseVersions)
+      .set({ isActive: false })
+      .where(eq(databaseVersions.isActive, true));
+
+    const [newVersion] = await db
+      .insert(databaseVersions)
+      .values(version)
+      .returning();
+
+    return newVersion;
+  }
+
+  async listVersions(): Promise<DatabaseVersion[]> {
+    return await db
+      .select()
+      .from(databaseVersions)
+      .orderBy(sql`${databaseVersions.appliedAt} DESC`);
+  }
+
+  async rollbackToVersion(version: string): Promise<void> {
+    await db
+      .update(databaseVersions)
+      .set({ isActive: false });
+
+    await db
+      .update(databaseVersions)
+      .set({ isActive: true })
+      .where(eq(databaseVersions.version, version));
   }
 }
 

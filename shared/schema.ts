@@ -2,6 +2,15 @@ import { z } from "zod";
 import { pgTable, serial, text, timestamp, varchar, boolean, integer, jsonb } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 
+// Database Version table for tracking migrations
+export const databaseVersions = pgTable('database_versions', {
+  id: serial('id').primaryKey(),
+  version: varchar('version', { length: 255 }).notNull(),
+  description: text('description').notNull(),
+  appliedAt: timestamp('applied_at').defaultNow().notNull(),
+  isActive: boolean('is_active').default(true).notNull()
+});
+
 // User table definition
 export const users = pgTable('users', {
   id: serial('id').primaryKey(),
@@ -204,3 +213,11 @@ export type RentalReference = typeof rentalReferences.$inferSelect;
 export type InsertRentalReference = z.infer<typeof insertRentalReferenceSchema>;
 export type InsertScreeningPage = z.infer<typeof insertScreeningPageSchema>;
 export type InsertScreeningSubmission = z.infer<typeof insertScreeningSubmissionSchema>;
+
+// Add version types
+export type DatabaseVersion = typeof databaseVersions.$inferSelect;
+export const insertDatabaseVersionSchema = createInsertSchema(databaseVersions).omit({
+  id: true,
+  appliedAt: true
+});
+export type InsertDatabaseVersion = z.infer<typeof insertDatabaseVersionSchema>;
