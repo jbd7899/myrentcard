@@ -15,44 +15,13 @@ app.use(express.urlencoded({ extended: false }));
 // Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
-  const path = req.path;
-  let capturedJsonResponse: Record<string, any> | undefined = undefined;
-
-  const originalResJson = res.json;
-  res.json = function (bodyJson, ...args) {
-    capturedJsonResponse = bodyJson;
-    return originalResJson.apply(res, [bodyJson, ...args]);
-  };
-
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (path.startsWith("/api")) {
-      let logLine = `${req.method} ${path} ${res.statusCode} in ${duration}ms`;
-      if (capturedJsonResponse) {
-        logLine += ` :: ${JSON.stringify(capturedJsonResponse)}`;
-      }
-
-      if (logLine.length > 80) {
-        logLine = logLine.slice(0, 79) + "…";
-      }
-
-      console.log(logLine);
+    if (req.path.startsWith("/api")) {
+      console.log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
     }
   });
-
   next();
-});
-
-// Debug route to check environment and paths
-app.get("/debug", (req, res) => {
-  res.json({
-    env: process.env.NODE_ENV,
-    cwd: process.cwd(),
-    distPath: path.join(process.cwd(), "dist/public"),
-    distExists: fs.existsSync(path.join(process.cwd(), "dist/public")),
-    nodeVersion: process.version,
-    uptime: process.uptime()
-  });
 });
 
 const startServer = async (initialPort: number) => {
@@ -61,53 +30,29 @@ const startServer = async (initialPort: number) => {
 
     // Error handling middleware
     app.use((err: any, _req: Request, res: Response, _next: NextFunction) => {
-      const status = err.status || err.statusCode || 500;
-      const message = err.message || "Internal Server Error";
-      res.status(status).json({ message });
       console.error("Server error:", err);
+      res.status(500).json({ message: "Internal Server Error" });
     });
 
     if (process.env.NODE_ENV === "production") {
       const distPath = path.join(process.cwd(), "dist/public");
-      console.log("[Static Files] Production mode detected");
       console.log("[Static Files] Looking for static files in:", distPath);
-      console.log("[Static Files] Current directory:", process.cwd());
-      console.log("[Static Files] Directory exists:", fs.existsSync(distPath));
 
       if (!fs.existsSync(distPath)) {
-        console.error("[Static Files] Build directory not found:", distPath);
         throw new Error(
           `Could not find the build directory: ${distPath}, make sure to build the client first`,
         );
       }
 
-      // Serve static files from the assets directory
-      app.use("/assets", express.static(path.join(distPath, "assets")));
-
-      // Serve other static files from the root
+      // Serve static files
       app.use(express.static(distPath));
 
-      // Add a route to verify static file serving
-      app.get("/static-check", (req, res) => {
-        const files = fs.readdirSync(distPath);
-        res.json({
-          distExists: fs.existsSync(distPath),
-          files: files,
-          distPath: distPath
-        });
-      });
-
       // Handle all other routes by serving index.html
-      app.get("*", (req, res) => {
-        const indexPath = path.join(distPath, "index.html");
-        console.log("[Static Files] Serving index.html for:", req.path);
-        console.log("[Static Files] From location:", indexPath);
-
-        if (!fs.existsSync(indexPath)) {
-          console.error("[Static Files] index.html not found at:", indexPath);
-          return res.status(404).send("Application not properly built");
+      app.get("*", (req, res, next) => {
+        if (req.headers["x-replit-healthcheck"]) {
+          return res.status(200).json({ status: "ok" });
         }
-        res.sendFile(indexPath);
+        res.sendFile(path.join(distPath, "index.html"));
       });
     } else {
       console.log("[Development] Setting up Vite middleware");
@@ -147,7 +92,6 @@ const startServer = async (initialPort: number) => {
     console.log('PORT:', process.env.PORT);
     console.log('NODE_ENV:', process.env.NODE_ENV);
 
-    // Use PORT from environment variable, default to 5000 for production
     const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 5000;
     await startServer(PORT);
   } catch (error) {
