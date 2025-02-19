@@ -1,3 +1,22 @@
+DATABASE_URL=postgresql://...
+NODE_ENV=development
+```
+
+## Testing
+
+To run the integration tests:
+
+```bash
+npm run test
+```
+
+This will execute all tests, including database version control tests. Make sure you have a test database configured before running the tests.
+
+## Database Version Control
+
+The application includes database version control functionality. Available commands:
+
+```bash
 # View current database version
 npm run db:version
 
@@ -8,37 +27,13 @@ npm run db:list
 npm run db:rollback <version>
 ```
 
-## Getting Started
-
-1. Clone the repository
-2. Install dependencies: `npm install`
-3. Set up environment variables (see `.env.example`)
-4. Initialize the database: `npm run db:push`
-5. Start the development server: `npm run dev`
-
-## Environment Variables
-
-Create a `.env` file with the following variables:
-
-```
-DATABASE_URL=postgresql://...
-NODE_ENV=development
-```
-
 ## GitHub Integration
 
-### Initial Setup
+The project is configured to work with GitHub. To set up GitHub integration:
 
-1. Create a new repository on GitHub
-2. Initialize the local repository:
-   ```bash
-   git init
-   git add .
-   git commit -m "Initial commit"
-   git branch -M main
-   git remote add origin <your-github-repo-url>
-   git push -u origin main
-   ```
+1. Create a GitHub Personal Access Token with repo permissions
+2. Add the token to your environment variables as GITHUB_TOKEN
+3. The repository is already connected to: https://github.com/jbd7899/myrentcard.git
 
 ### Development Workflow
 
