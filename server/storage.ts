@@ -13,7 +13,7 @@ import type {
 } from "@shared/schema";
 import { users, properties, applications, screeningPages, screeningSubmissions, databaseVersions } from "@shared/schema";
 import { db } from "./db";
-import { eq, inArray, sql } from "drizzle-orm";
+import { eq, inArray, sql, desc } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -244,7 +244,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(databaseVersions)
       .where(eq(databaseVersions.isActive, true))
-      .orderBy(sql`${databaseVersions.appliedAt} DESC`)
+      .orderBy(desc(databaseVersions.appliedAt))
       .limit(1);
     return version;
   }
@@ -268,7 +268,7 @@ export class DatabaseStorage implements IStorage {
     return await db
       .select()
       .from(databaseVersions)
-      .orderBy(sql`${databaseVersions.appliedAt} DESC`);
+      .orderBy(desc(databaseVersions.appliedAt));
   }
 
   async rollbackToVersion(version: string): Promise<void> {

@@ -30,14 +30,18 @@ describe("Database Version Control", () => {
   });
 
   it("should list all versions in descending order", async () => {
-    const versions = [
-      { version: "1.0.0", description: "Initial schema", isActive: false },
-      { version: "1.1.0", description: "Added user profiles", isActive: true },
-    ];
+    // Add versions sequentially to ensure proper ordering
+    await storage.addVersion({
+      version: "1.0.0",
+      description: "Initial schema",
+      isActive: false,
+    });
 
-    for (const version of versions) {
-      await storage.addVersion(version);
-    }
+    await storage.addVersion({
+      version: "1.1.0",
+      description: "Added user profiles",
+      isActive: true,
+    });
 
     const listedVersions = await storage.listVersions();
     expect(listedVersions).toHaveLength(2);
@@ -46,14 +50,18 @@ describe("Database Version Control", () => {
   });
 
   it("should rollback to a specific version", async () => {
-    const versions = [
-      { version: "1.0.0", description: "Initial schema", isActive: false },
-      { version: "1.1.0", description: "Added user profiles", isActive: true },
-    ];
+    // Add versions sequentially
+    await storage.addVersion({
+      version: "1.0.0",
+      description: "Initial schema",
+      isActive: false,
+    });
 
-    for (const version of versions) {
-      await storage.addVersion(version);
-    }
+    await storage.addVersion({
+      version: "1.1.0",
+      description: "Added user profiles",
+      isActive: true,
+    });
 
     await storage.rollbackToVersion("1.0.0");
 

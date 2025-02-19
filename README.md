@@ -1,16 +1,21 @@
-DATABASE_URL=postgresql://...
-NODE_ENV=development
-```
+# Make your changes in Replit
+   # Then run the sync script
+   bash scripts/sync-github.sh
+   ```
 
-## Testing
+3. The repository is connected to: https://github.com/jbd7899/myrentcard.git
 
-To run the integration tests:
+### Development Workflow
 
-```bash
-npm run test
-```
+1. Make changes in Replit
+2. Test your changes thoroughly
+3. Run the sync script to push to GitHub:
+   ```bash
+   bash scripts/sync-github.sh
+   ```
 
-This will execute all tests, including database version control tests. Make sure you have a test database configured before running the tests.
+4. Verify changes are reflected in the GitHub repository
+
 
 ## Database Version Control
 
@@ -27,27 +32,9 @@ npm run db:list
 npm run db:rollback <version>
 ```
 
-## GitHub Integration
+## Testing
 
-The project is configured to work with GitHub. To set up GitHub integration:
+To run the integration tests:
 
-1. Create a GitHub Personal Access Token with repo permissions
-2. Add the token to your environment variables as GITHUB_TOKEN
-3. The repository is already connected to: https://github.com/jbd7899/myrentcard.git
-
-### Development Workflow
-
-1. Create a feature branch:
-   ```bash
-   git checkout -b feature/your-feature-name
-   ```
-
-2. Make your changes and commit:
-   ```bash
-   git add .
-   git commit -m "Description of changes"
-   ```
-
-3. Push changes and create a pull request:
-   ```bash
-   git push origin feature/your-feature-name
+```bash
+npm run test

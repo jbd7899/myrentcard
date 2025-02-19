@@ -1,7 +1,14 @@
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, beforeEach } from 'vitest';
 import { storage } from '../server/storage';
+import { db } from '../server/db';
+import { databaseVersions } from '@shared/schema';
 
 describe('Database Version Control', () => {
+  beforeEach(async () => {
+    // Clear all versions before each test
+    await db.delete(databaseVersions);
+  });
+
   it('should create a new version', async () => {
     const version = await storage.addVersion({
       version: '1.0.0',
