@@ -4,3 +4,27 @@ dist
 server/public
 vite.config.ts.*
 *.tar.gz
+# Database
+*.env
+.env.*
+.env.local
+.env.*.local
+# Logs
+logs
+*.log
+npm-debug.log*
+# IDE
+.idea
+.vscode
+# Migration files (These should be tracked in git)
+!migrations/
+# Temp files
+.temp
+.tmp
+# Build files
+build/
+# Coverage
+coverage/
+# Cache
+.cache/
+.npm

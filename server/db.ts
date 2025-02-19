@@ -11,21 +11,7 @@ if (!process.env.DATABASE_URL) {
   );
 }
 
-console.log("[Database] Connecting to database...");
-
-export const pool = new Pool({ 
-  connectionString: process.env.DATABASE_URL,
-  connectionTimeoutMillis: 15000,
-  max: 5,
-  idleTimeoutMillis: 60000,
-  ssl: true
-});
-
-// Add event listeners for connection issues
-pool.on('error', (err) => {
-  console.error('Unexpected error on idle client', err);
-});
-
+export const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 export const db = drizzle(pool, { schema });
 
 // Test the connection with retry logic
