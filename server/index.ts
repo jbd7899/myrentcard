@@ -9,6 +9,8 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 const app = express();
+
+// Basic middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -26,6 +28,7 @@ app.use((req, res, next) => {
 
 const startServer = async (initialPort: number) => {
   try {
+    // Set up routes first (API endpoints)
     const server = await registerRoutes(app);
 
     // Error handling middleware
@@ -40,21 +43,22 @@ const startServer = async (initialPort: number) => {
 
       if (!fs.existsSync(distPath)) {
         throw new Error(
-          `Could not find the build directory: ${distPath}, make sure to build the client first`,
+          `Could not find the build directory: ${distPath}, make sure to build the client first`
         );
       }
 
-      // Serve static files
       app.use(express.static(distPath));
 
-      // Handle all other routes by serving index.html
-      app.get("*", (req, res, next) => {
+      // Serve index.html for all non-API routes in production
+      app.get(/^(?!\/api).+/, (req, res) => {
+        // Handle health checks
         if (req.headers["x-replit-healthcheck"]) {
           return res.status(200).json({ status: "ok" });
         }
         res.sendFile(path.join(distPath, "index.html"));
       });
     } else {
+      // Development mode
       console.log("[Development] Setting up Vite middleware");
       await setupVite(app, server);
     }
